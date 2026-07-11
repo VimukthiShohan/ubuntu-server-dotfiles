@@ -1,0 +1,14 @@
+# npm global packages — one per line. Installed with: npm install -g <pkg>
+# Blank lines and lines starting with # are ignored.
+# (claude code and opencode are installed via installers.sh, not here.)
+#
+# Examples — uncomment or add your own:
+# typescript
+# tldr
+
+@openai/codex
+portless
+agent-device
+agent-browser
+typescript
+eas-cli

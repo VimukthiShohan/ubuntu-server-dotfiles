@@ -1,0 +1,42 @@
+# Set your identity in ~/.gitconfig.local (untracked), e.g.:
+#   [user]
+#       name = Your Name
+#       email = you@example.com
+[include]
+	path = ~/.gitconfig.local
+[init]
+	defaultBranch = main
+[pull]
+	rebase = false
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+
+[core]
+    editor = nvim
+    pager = delta --dark
+
+[interactive]
+    diffFilter = delta --color-only
+
+[delta]
+    navigate = true
+    line-numbers = true
+    side-by-side = false
+    syntax-theme = Dracula
+    true-color = always
+
+[merge]
+    conflictstyle = diff3
+	tool = nvimdiff
+
+[diff]
+    colorMoved = default
+
+[mergetool "nvimdiff"]
+    layout = "LOCAL,MERGED,REMOTE"
+	path = nvim
+[mergetool]
+	prompt = false

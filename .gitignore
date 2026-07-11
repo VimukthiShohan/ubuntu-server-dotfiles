@@ -1,0 +1,30 @@
+# --- OS junk ---
+.DS_Store
+._*
+Thumbs.db
+
+# --- Editor / IDE state ---
+.claude/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- Machine-local overrides (never commit) ---
+local.zsh
+*.local
+.env
+.env.*
+
+# --- Secrets safety net (should never exist here, but never commit if they do) ---
+id_rsa*
+id_ecdsa*
+id_ed25519*
+*.pem
+*.key
+*.p12
+*.pfx
+known_hosts
+authorized_keys
+hosts.yml

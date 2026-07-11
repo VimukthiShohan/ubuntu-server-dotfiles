@@ -1,0 +1,9 @@
+# cargo crates — one per line. Installed with: cargo install <crate>
+# Blank lines and lines starting with # are ignored.
+#
+# Examples — uncomment or add your own:
+# tokei
+# cargo-edit
+
+yazi-build
+rtk

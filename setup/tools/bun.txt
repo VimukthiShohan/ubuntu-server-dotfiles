@@ -1,0 +1,5 @@
+# bun global packages — one per line. Installed with: bun add -g <pkg>
+# Blank lines and lines starting with # are ignored.
+#
+# Examples — uncomment or add your own:
+# @biomejs/biome

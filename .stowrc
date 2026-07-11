@@ -1,0 +1,10 @@
+# Stow options for this repo (read when stow runs from ~/.dotfiles).
+# Packages live under home/ and link into $HOME.
+--dir=home
+--target=~
+
+# Ignore patterns are listed explicitly rather than relying on Stow's built-in
+# default list. Covers the only junk that can appear inside a package on macOS.
+--ignore=\.DS_Store
+--ignore=.*~
+--ignore=\.swp$

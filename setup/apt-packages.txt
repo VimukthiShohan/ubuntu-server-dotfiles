@@ -1,0 +1,74 @@
+# Ubuntu apt packages for headless CLI and service development.
+# One package per line. Blank lines and comments are ignored.
+
+# Core shell, build, and source-control tools.
+sudo
+ca-certificates
+software-properties-common
+curl
+wget
+git
+zsh
+stow
+tmux
+ripgrep
+fd-find
+fzf
+bat
+eza
+jq
+tree
+less
+unzip
+zip
+rsync
+telnet
+ncurses-term
+direnv
+zoxide
+btop
+htop
+ncdu
+shellcheck
+just
+git-delta
+
+# Build toolchains and native library headers.
+build-essential
+pkg-config
+cmake
+ninja-build
+gettext
+libssl-dev
+libreadline-dev
+zlib1g-dev
+libsqlite3-dev
+libbz2-dev
+libffi-dev
+liblzma-dev
+
+# Language and app development CLIs available from Ubuntu.
+golang-go
+python3-pip
+python3-venv
+pipx
+luarocks
+tree-sitter-cli
+gh
+thefuck
+
+# Mobile-development CLI dependencies, without desktop IDEs.
+openjdk-17-jdk
+android-tools-adb
+android-tools-fastboot
+watchman
+
+# Server/service tooling.
+docker.io
+docker-compose-v2
+postgresql-client
+redis-tools
+
+# Document/image utilities useful in development workflows.
+imagemagick
+poppler-utils

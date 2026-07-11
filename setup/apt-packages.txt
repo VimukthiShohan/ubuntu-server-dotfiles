@@ -57,12 +57,6 @@ tree-sitter-cli
 gh
 thefuck
 
-# Mobile-development CLI dependencies, without desktop IDEs.
-openjdk-17-jdk
-android-tools-adb
-android-tools-fastboot
-watchman
-
 # Server/service tooling.
 docker.io
 docker-compose-v2

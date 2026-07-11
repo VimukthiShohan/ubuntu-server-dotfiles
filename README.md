@@ -68,7 +68,7 @@ you change package manifests or dotfiles.
 ## Package Manifests
 
 Ubuntu packages live in `setup/apt-packages.txt`. Keep it to CLI tools,
-services, build dependencies, and mobile command-line dependencies.
+services, and build dependencies.
 
 Language and tool manifests:
 
@@ -100,21 +100,6 @@ Node is managed by `fnm`, not `nvm`.
 This repo does not stow SSH private keys, GitHub host auth, desktop app
 settings, or machine-local secrets. Put machine-only secrets in untracked
 local files (`~/.gitconfig.local`, `~/.config/zsh/local.zsh`).
-
-## Mobile Development Notes
-
-This setup installs CLI-friendly mobile dependencies:
-
-- `openjdk-17-jdk`
-- `android-tools-adb`
-- `android-tools-fastboot`
-- `watchman`
-- `eas-cli`
-- `maestro`
-
-`ANDROID_HOME` is set to `~/Android/Sdk` for projects that install Android SDK
-command-line tools locally. Desktop IDE setup is intentionally out of scope for
-this server-focused repo.
 
 ## Verification
 

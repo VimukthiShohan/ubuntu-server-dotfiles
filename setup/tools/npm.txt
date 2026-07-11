@@ -8,7 +8,4 @@
 
 @openai/codex
 portless
-agent-device
-agent-browser
 typescript
-eas-cli

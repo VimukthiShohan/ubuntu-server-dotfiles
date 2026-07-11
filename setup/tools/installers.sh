@@ -3,7 +3,7 @@
 
 set -u
 
-export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$HOME/.maestro/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"
 
 install_aws_cli() {
   local tmp
@@ -78,9 +78,4 @@ fi
 if ! command -v opencode >/dev/null 2>&1; then
   echo "  -> installing opencode"
   curl -fsSL https://opencode.ai/install | bash
-fi
-
-if ! command -v maestro >/dev/null 2>&1; then
-  echo "  -> installing maestro"
-  curl -fsSL "https://get.maestro.mobile.dev" | bash
 fi

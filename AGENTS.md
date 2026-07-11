@@ -7,7 +7,7 @@ This file provides shared guidance to AI coding agents when working with code in
 Ubuntu 24.04 **server** dotfiles: a headless CLI/service development environment applied with GNU
 Stow plus idempotent bash scripts. Intentionally no desktop apps, no GUI terminal config, and no
 SSH/GitHub auth state. `README.md` is the canonical human-facing doc (setup walkthrough, stow
-package table, mobile-CLI notes) — don't duplicate its tables here.
+package table) — don't duplicate its tables here.
 
 ## Repository Layout
 

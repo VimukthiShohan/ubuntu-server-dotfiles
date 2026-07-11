@@ -11,6 +11,7 @@ and get a fully configured shell, editor, and toolchain for any user.
 | --- | --- | --- |
 | Ubuntu CLI and service packages | `setup/apt-packages.txt` | `apt-get install` |
 | Node runtime | `fnm` from `setup/install-tools.sh` | `fnm install --lts` |
+| Neovim, bun, pnpm, Rust, uv | `setup/install-tools.sh` | guarded installers |
 | Developer CLIs | `setup/tools/*.txt` | npm, bun, cargo, go |
 | Script-installed CLIs | `setup/tools/installers.sh` | guarded installers |
 | Dotfiles | `home/*` stow packages | GNU Stow |
@@ -81,6 +82,24 @@ Language and tool manifests:
 | `setup/tools/installers.sh` | guarded shell installers |
 
 Node is managed by `fnm`, not `nvm`.
+
+## Notable Tools
+
+Highlights installed by the manifests that have no stow package of their own:
+
+| Tool | Installed by | Notes |
+| --- | --- | --- |
+| `yazi` | `setup/tools/cargo.txt` (`yazi-build`) | Terminal file manager; the `y` wrapper in `50-tools.zsh` cd's to the last visited dir on exit |
+| `rtk` | `setup/tools/cargo.txt` | Token-optimized CLI proxy for AI agent sessions |
+| `gum` | `setup/tools/go.txt` | Prompts and styled output for shell scripts |
+| `claude`, `opencode` | `setup/tools/installers.sh` | AI coding agents (official install scripts) |
+| `codex`, `portless` | `setup/tools/npm.txt` | OpenAI Codex CLI; local-dev port/domain manager |
+| `aws` | `setup/tools/installers.sh` | AWS CLI v2 (`awscli` is not on Ubuntu 24.04 apt) |
+| `lua-language-server` | `setup/tools/installers.sh` | Lua LSP for Neovim (not on Ubuntu 24.04 apt) |
+| Neovim | `setup/install-tools.sh` | Official release tarball → `~/.local/bin/nvim`; apt's 0.9 is too old |
+| bun, pnpm, Rust, uv | `setup/install-tools.sh` | Language toolchains (pnpm via corepack) |
+| `zoxide`, `direnv`, `thefuck` | `setup/apt-packages.txt` | Hooked into zsh via `50-tools.zsh`: smarter `cd`, per-dir env, command corrector (aliased `fk`) |
+| `just`, `ncdu`, `shellcheck` | `setup/apt-packages.txt` | Task runner, disk-usage explorer, shell linter |
 
 ## Included Stow Packages
 

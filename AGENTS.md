@@ -85,10 +85,24 @@ Most are gated by `tests/ubuntu-config.bash` — a violation fails the guard.
 ## Commit Convention
 
 Concise, imperative, lowercase subject lines describing the change (matching the existing history:
-`update default realm names in Keycloak cloning script`). Single `main` branch, no tags or releases,
-no commitlint/husky tooling in this repo.
+`update default realm names in Keycloak cloning script`). Single `main` branch, no commitlint/husky
+tooling in this repo.
 
 Types: feat, fix, docs, refactor, test, chore, perf, ci. Branch patterns:`feat/`, `fix/`, `hotfix/`, `docs/`, `chore/`, `refactor/`.
+
+## Release Workflow
+
+Releases are cut from `main` as annotated semver tags with a matching GitHub release
+(first release: `v1.0.0`).
+
+```bash
+git tag -a vX.Y.Z -m "vX.Y.Z" <commit>
+git push origin vX.Y.Z
+gh release create vX.Y.Z --title "vX.Y.Z" --notes "<summary of changes>" --verify-tag
+```
+
+- Tag name and release title are identical: `vX.Y.Z`.
+- Tag only commits already pushed to `origin/main`; uncommitted/staged work is never part of a release.
 
 **Commit generation rules (Claude Code):**
 

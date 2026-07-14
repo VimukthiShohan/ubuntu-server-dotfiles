@@ -10,6 +10,7 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APT_PACKAGES="$DOTFILES/setup/apt-packages.txt"
 FRESH=0
 [[ "${1:-}" == "--fresh" ]] && FRESH=1
+CLONE_FAILURES=()
 
 section() {
   echo
@@ -96,14 +97,21 @@ configure_login_shell() {
   echo "  -> Changed $USER login shell to $zsh_path. Log out and back in to use it."
 }
 
+clone_repo_if_missing() {
+  local dest="$1"
+  shift
+  [[ -d "$dest" ]] && return 0
+  if ! git clone "$@" "$dest"; then
+    echo "  !! clone failed: $dest — re-run apply.sh to retry."
+    CLONE_FAILURES+=("$dest")
+  fi
+}
+
 post_install_repos() {
   section "Post-install repos"
-  [[ -d "$HOME/.fzf-git.sh" ]] || \
-    git clone https://github.com/junegunn/fzf-git.sh.git "$HOME/.fzf-git.sh"
-  [[ -d "$HOME/.tmux/plugins/tpm" ]] || \
-    git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
-  [[ -d "$HOME/powerlevel10k" ]] || \
-    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git "$HOME/powerlevel10k"
+  clone_repo_if_missing "$HOME/.fzf-git.sh" https://github.com/junegunn/fzf-git.sh.git
+  clone_repo_if_missing "$HOME/.tmux/plugins/tpm" https://github.com/tmux-plugins/tpm
+  clone_repo_if_missing "$HOME/powerlevel10k" --depth=1 https://github.com/romkatv/powerlevel10k.git
 }
 
 stow_dotfiles() {
@@ -151,16 +159,23 @@ main() {
   install_apt_packages
   create_ubuntu_command_shims
 
+  # Stow first: it is local and cheap, and linking the dotfiles must never be
+  # hostage to the network/privileged steps below aborting the run.
+  stow_dotfiles
+
   section "Installing developer CLIs and package managers"
   "$DOTFILES/setup/install-tools.sh"
 
   configure_services
   configure_login_shell
   post_install_repos
-  stow_dotfiles
   reload_tmux_config
 
   echo
+  if (( ${#CLONE_FAILURES[@]} )); then
+    echo "==> Apply complete with ${#CLONE_FAILURES[@]} clone failure(s) — re-run ./apply.sh to retry."
+    exit 1
+  fi
   echo "==> Apply complete."
 }
 

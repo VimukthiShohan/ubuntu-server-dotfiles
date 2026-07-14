@@ -13,9 +13,9 @@ package table) — don't duplicate its tables here.
 
 ```
 setup.sh                 ← fresh-Ubuntu bootstrap: prereqs via apt, then apply.sh --fresh
-apply.sh                 ← idempotent converge: apt manifest → bat/fd shims → install-tools.sh
-                            → docker service → zsh login shell → clone fzf-git/tpm/p10k
-                            → stow home/* → tmux config reload
+apply.sh                 ← idempotent converge: apt manifest → bat/fd shims → stow home/*
+                            → install-tools.sh → docker service → zsh login shell
+                            → clone fzf-git/tpm/p10k (non-fatal) → tmux config reload
 doctor.sh                ← read-only drift/status checks (exits 1 on issues); never mutates
 setup/
   apt-packages.txt       ← apt manifest (one package per line, # comments ignored)

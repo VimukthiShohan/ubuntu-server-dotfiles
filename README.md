@@ -66,6 +66,33 @@ git pull
 `setup.sh` is for a fresh Ubuntu machine. `apply.sh` is safe to re-run whenever
 you change package manifests or dotfiles.
 
+## Troubleshooting
+
+**Shell aliases missing after setup** (`y: command not found`, plain zsh prompt
+instead of powerlevel10k, still landing in bash): the first `setup.sh` run
+aborted partway — tools got installed, but the run died before finishing, so
+your shell never picked up the config. `apply.sh` now stows dotfiles early and
+tolerates clone flakes, but any step can still fail (network, sudo timeout).
+
+Diagnose and recover:
+
+```bash
+ls -la ~/.zshenv ~/.config/zsh   # missing → dotfiles were never linked
+cd ~/.dotfiles
+./doctor.sh                      # read-only: lists everything that drifted
+./apply.sh --fresh               # re-converge; idempotent, safe to repeat
+exec zsh -l
+```
+
+`apply.sh` is a converge script: whatever failed, fixing the cause and
+re-running it is always the answer. If it aborts, the failing step is the one
+right above the `!! apply.sh: step above failed` line.
+
+Note that `y` is not a binary — it is a zsh wrapper around `yazi` defined in
+`50-tools.zsh`, and it only exists once the zsh config is linked and `yazi`
+(built from source by the `yazi-build` crate, which can take a while) is on
+`PATH`.
+
 ## Package Manifests
 
 Ubuntu packages live in `setup/apt-packages.txt`. Keep it to CLI tools,

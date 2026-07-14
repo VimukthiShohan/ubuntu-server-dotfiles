@@ -89,6 +89,25 @@ assert_contains 'default-command "/usr/bin/zsh -l"' "home/tmux/.tmux.conf"
 assert_contains 'tmux source-file "\$HOME/.tmux.conf"' "apply.sh"
 assert_contains 'exec zsh -l' "apply.sh"
 
+# stow must run before the failure-prone steps (installers, services, chsh,
+# repo clones) so an aborted run can never leave a machine without dotfiles.
+if ! awk '
+  /^  stow_dotfiles$/                       { stow = NR }
+  /^  "\$DOTFILES\/setup\/install-tools\.sh"$/ { tools = NR }
+  /^  configure_services$/                  { services = NR }
+  /^  configure_login_shell$/               { shell = NR }
+  /^  post_install_repos$/                  { repos = NR }
+  END {
+    exit !(stow && tools && services && shell && repos && \
+           stow < tools && stow < services && stow < shell && stow < repos)
+  }
+' "$ROOT/apply.sh"; then
+  fail "apply.sh must stow dotfiles before install-tools, services, login shell, and repo clones"
+fi
+
+# repo clones are network-dependent; a single flake must not abort the run.
+assert_contains 'clone_repo_if_missing' "apply.sh"
+
 if awk '
   /pcall\(function\(\)/ { guarded = 1 }
   /vim\.opt\.winborder[[:space:]]*=/ && !guarded { print FILENAME ":" FNR ":" $0; bad = 1 }

@@ -60,6 +60,11 @@ if grep -qx 'neovim' "$ROOT/setup/apt-packages.txt"; then
   fail "setup/apt-packages.txt should not install Ubuntu apt neovim because Noble ships an old version"
 fi
 
+if grep -qx 'tree-sitter-cli' "$ROOT/setup/apt-packages.txt"; then
+  fail "setup/apt-packages.txt should not install apt tree-sitter-cli because Noble ships 0.20.8 which lacks the 'tree-sitter build' subcommand nvim-treesitter needs; it lives in setup/tools/npm.txt"
+fi
+assert_contains '^tree-sitter-cli$' "setup/tools/npm.txt"
+
 assert_contains 'awscli-exe-linux-x86_64\.zip' "setup/tools/installers.sh"
 assert_contains 'install_lua_language_server' "setup/tools/installers.sh"
 assert_contains 'api\.github\.com/repos/LuaLS/lua-language-server/releases/latest' "setup/tools/installers.sh"

@@ -8,4 +8,5 @@
 
 @openai/codex
 portless
+tree-sitter-cli
 typescript

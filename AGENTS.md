@@ -73,7 +73,8 @@ Most are gated by `tests/ubuntu-config.bash` — a violation fails the guard.
   `neovim` package (Noble ships 0.9). Version-sensitive Neovim options (e.g. `vim.opt.winborder`)
   must stay `pcall`-guarded in `home/nvim/.config/nvim/lua/config/set.lua`.
 - **apt manifest hygiene:** no `lua-language-server`/`awscli` (unavailable on 24.04 — they live in
-  `installers.sh`), no Ruby/rbenv, keep `thefuck`.
+  `installers.sh`), no `tree-sitter-cli` (Noble ships 0.20.8, too old for nvim-treesitter's
+  `tree-sitter build` — it lives in `setup/tools/npm.txt`), no Ruby/rbenv, keep `thefuck`.
 - **cargo manifest:** installs use `cargo install --locked`; yazi ships as `yazi-build` (not
   `yazi-fm`/`yazi-cli`); `rtk` must stay listed.
 - **zsh layout:** `ZDOTDIR=~/.config/zsh` set in `home/zsh/.zshenv`; config is split into numbered

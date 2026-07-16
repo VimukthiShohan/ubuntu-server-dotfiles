@@ -125,6 +125,13 @@ else
   fail "Neovim winborder must be guarded because Ubuntu 24.04 ships Neovim 0.9"
 fi
 
+# bootstrap.sh: public HTTPS clone only, no auth state, no macOS artifacts
+assert_contains 'https://github\.com/VimukthiShohan/ubuntu-server-dotfiles' "bootstrap.sh"
+assert_no_pattern 'git@|ssh://' "bootstrap.sh"
+assert_no_pattern '\b(brew|cask|mas|softwareupdate|xcode-select|dockutil|yabai|skhd|ghostty|zed)\b' "bootstrap.sh"
+assert_contains '\.dotfiles' "bootstrap.sh"
+assert_contains 'main "\$@"' "bootstrap.sh"
+
 if (( failures > 0 )); then
   exit 1
 fi

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # setup.sh - fresh Ubuntu bootstrap. Installs prerequisites, then delegates to apply.sh --fresh.
 
-set -euo pipefail
+set -euEo pipefail
 trap 'echo "!! setup.sh: step above failed. Fix it, then re-run this script."' ERR
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

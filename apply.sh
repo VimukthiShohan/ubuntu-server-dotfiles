@@ -9,7 +9,16 @@ trap 'echo "!! apply.sh: step above failed. Fix it, then re-run this script."' E
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APT_PACKAGES="$DOTFILES/setup/apt-packages.txt"
 FRESH=0
-[[ "${1:-}" == "--fresh" ]] && FRESH=1
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --fresh) FRESH=1 ;;
+    -h|--help) echo "Usage: apply.sh [--fresh]"; exit 0 ;;
+    *) echo "!! apply.sh: unknown argument '$1' (accepts only --fresh)." >&2
+       echo "   Usage: apply.sh [--fresh]" >&2
+       exit 1 ;;
+  esac
+  shift
+done
 CLONE_FAILURES=()
 
 section() {
@@ -100,7 +109,17 @@ configure_login_shell() {
 clone_repo_if_missing() {
   local dest="$1"
   shift
-  [[ -d "$dest" ]] && return 0
+  if [[ -d "$dest" ]]; then
+    # A completed clone has a resolvable HEAD. A dir left partial by an
+    # interrupted clone (or otherwise not a healthy repo) is removed and retried
+    # so the run makes good on its "re-run to retry" promise instead of skipping
+    # a broken checkout forever.
+    if git -C "$dest" rev-parse --verify --quiet HEAD >/dev/null 2>&1; then
+      return 0
+    fi
+    echo "  !! $dest exists but is not a healthy git repo — removing and re-cloning."
+    rm -rf "$dest"
+  fi
   if ! git clone "$@" "$dest"; then
     echo "  !! clone failed: $dest — re-run apply.sh to retry."
     CLONE_FAILURES+=("$dest")

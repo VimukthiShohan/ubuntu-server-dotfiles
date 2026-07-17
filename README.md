@@ -10,9 +10,11 @@ and get a fully configured shell, editor, and toolchain for any user.
 As a **non-root user with sudo** on Ubuntu 24.04:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/VimukthiShohan/ubuntu-server-dotfiles/main/bootstrap.sh | bash
+f=$(mktemp) && curl -fsSL https://raw.githubusercontent.com/VimukthiShohan/ubuntu-server-dotfiles/main/bootstrap.sh -o "$f" && bash "$f"
 ```
 
+Download-then-run (not `curl … | bash`) so a truncated download can never execute
+a partial script or report false success — `bash` runs only after `curl` succeeds.
 Clones the repo to `~/.dotfiles` (override: `DOTFILES_DIR`) and runs the full setup.
 Safe to re-run; refuses to touch a `~/.dotfiles` that isn't this repo.
 
@@ -24,7 +26,7 @@ Installed to `~/.local/bin/dotf` by the stow step.
 |---|---|
 | `dotf apply [--fresh]` | converge this machine (`apply.sh`) |
 | `dotf doctor` | read-only drift check (`doctor.sh`, exit 1 on drift) |
-| `dotf update` | `git pull --ff-only`, then converge (refuses on a dirty tree) |
+| `dotf update` | `git pull --ff-only`, then converge (refuses on tracked changes; untracked files OK) |
 | `dotf test` | guard test + `bash -n` + `zsh -n` |
 
 ## What This Manages

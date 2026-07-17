@@ -50,7 +50,7 @@ edit manifest/dotfile → bash tests/ubuntu-config.bash → ./apply.sh
   (or `installers.sh` if curl-installed) · new dotfile → `home/<pkg>/` mirroring its `$HOME` path
 - Never hand-install on a machine and call it done — if it isn't in a manifest or stow package,
   it doesn't exist.
-- Fresh machine one-liner → `curl -fsSL https://raw.githubusercontent.com/VimukthiShohan/ubuntu-server-dotfiles/main/bootstrap.sh | bash`
+- Fresh machine one-liner → `f=$(mktemp) && curl -fsSL https://raw.githubusercontent.com/VimukthiShohan/ubuntu-server-dotfiles/main/bootstrap.sh -o "$f" && bash "$f"` (download-then-run, so a truncated download can't run a partial script or report false success)
 - `dotf` (stowed to `~/.local/bin`) wraps the scripts: `dotf apply|doctor|update|test` — `dotf test` runs the verification block below.
 
 ## Verification (run before committing)

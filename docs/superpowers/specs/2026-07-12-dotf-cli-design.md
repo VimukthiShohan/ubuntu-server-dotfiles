@@ -48,7 +48,7 @@ Stow links `~/.local/bin/dotf` → `home/dotf/.local/bin/dotf` inside the repo.
 `readlink -f "$0"` resolves the symlink to the real file; the repo root is five `dirname` steps up
 (`…/home/dotf/.local/bin/dotf` is a file, so the first `dirname` strips it before any directory →
 strip `dotf` (file), `bin`, `.local`, `dotf`, `home`).
-Works wherever the repo is cloned (`~/dotfiles` on servers, `~/Projects/Private/dotfiles` on the
+Works wherever the repo is cloned (`~/.dotfiles` on servers, `~/Projects/Private/dotfiles` on the
 authoring machine). If the resolved path does not look like the repo (no `apply.sh` at the derived
 root), fail with a clear error instead of guessing.
 
@@ -58,7 +58,7 @@ root), fail with a clear error instead of guessing.
 |---|---|
 | `dotf apply [--fresh]` | exec `apply.sh` (flags passed through) |
 | `dotf doctor` | exec `doctor.sh` — read-only, exits 1 on drift |
-| `dotf update` | `git pull --ff-only` in the repo, then `apply.sh`; refuses if working tree is dirty |
+| `dotf update` | `git pull --ff-only` in the repo, then `apply.sh`; refuses if there are tracked (committed-file) modifications — untracked files are allowed |
 | `dotf test` | the pre-commit verification block: `bash tests/ubuntu-config.bash`, `bash -n` over all repo scripts (including `bootstrap.sh` and `dotf` itself), `zsh -n home/zsh/.zshrc home/zsh/.config/zsh/*.zsh` |
 | `dotf help`, no args, `-h`, `--help` | usage, exit 0 |
 | unknown subcommand | usage on stderr, exit 1 |
@@ -66,8 +66,9 @@ root), fail with a clear error instead of guessing.
 ### Error handling
 
 - `set -euo pipefail` throughout.
-- `update` aborts with a message if `git status --porcelain` is non-empty, or if the pull is not a
-  fast-forward.
+- `update` aborts with a message if there are tracked modifications
+  (`git status --porcelain --untracked-files=no` non-empty), or if the pull is not a fast-forward.
+  Untracked files do not block the update.
 - Repo-root discovery failure → explicit error naming the resolved path.
 
 ## bootstrap.sh
@@ -86,9 +87,14 @@ Flow (idempotent, safe to re-run):
 1. Ubuntu check (same `/etc/os-release` gate as `setup.sh`).
 2. `sudo apt-get install -y git` only if git is missing.
 3. Clone `https://github.com/VimukthiShohan/ubuntu-server-dotfiles.git` to `~/.dotfiles`
-   (override with `DOTFILES_DIR` env var). If the target dir already exists: proceed only when it
-   is a git repo whose `origin` URL points at `VimukthiShohan/ubuntu-server-dotfiles` (HTTPS or
-   SSH form); otherwise abort with a clear message naming the offending directory.
+   (override with `DOTFILES_DIR` env var). If the target dir already exists, proceed only when it
+   passes full upstream verification: origin normalizes exactly to the HTTPS `REPO_HTTPS` constant
+   (SSH-form origins are rejected — the clone is always HTTPS), `git fetch origin main` succeeds,
+   the tree is clean (`status --porcelain --ignored` empty), and `HEAD == FETCH_HEAD`. Any failure
+   aborts with a clear message naming the directory. All verification git commands run with
+   config-driven code execution neutralized (`GIT_CONFIG_NOSYSTEM`, empty
+   fsmonitor/hooks/credential/ssh helpers) so a planted `.git/config` cannot execute before the
+   clone is trusted.
 4. Run `<dir>/setup.sh` (which delegates to `apply.sh --fresh`; the stow step is what installs
    `dotf` into `~/.local/bin`).
 5. Final message: start a new login shell (shell change + PATH) — `dotf` is available from then on.
@@ -101,7 +107,11 @@ Flow (idempotent, safe to re-run):
 
 ## Integration with existing files
 
-- `apply.sh` — no changes needed: `home/dotf` is picked up by the existing `stow home/*` loop.
+- `apply.sh` — `home/dotf` is picked up by the existing `stow home/*` loop. Small supporting
+  changes landed during hardening: `mkdir -p "$HOME/.local/bin"` before stow (so `dotf` links as a
+  file, not a folded dir-symlink), `-E` on `set` so the ERR trap fires inside functions, argument
+  validation (only `--fresh` accepted), and post-install repo-clone failures warn + `exit 0`
+  (network flake is non-fatal; re-running retries) rather than aborting the whole converge.
 - `doctor.sh` — add a check that `~/.local/bin/dotf` resolves into the repo (drift signal).
 - `tests/ubuntu-config.bash` — new guards: `bootstrap.sh` must use the HTTPS clone URL (reject
   `git@`/`ssh://`); existing forbidden-pattern sweeps (macOS artifacts, nvm) apply to the new

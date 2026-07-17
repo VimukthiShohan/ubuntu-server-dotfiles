@@ -86,7 +86,12 @@ main() {
 
   section "Checking dotf CLI"
   local dotf_link="$HOME/.local/bin/dotf"
-  if [[ -e "$dotf_link" && "$(readlink -f "$dotf_link" 2>/dev/null)" == "$DOTFILES/home/dotf/.local/bin/dotf" ]]; then
+  # Resolve BOTH sides: $DOTFILES is logical (cd+pwd preserves symlinks), so a
+  # repo under a symlinked parent would otherwise never match the fully-resolved
+  # readlink of the link and report perpetual false drift.
+  local dotf_target
+  dotf_target="$(readlink -f "$DOTFILES/home/dotf/.local/bin/dotf" 2>/dev/null)"
+  if [[ -e "$dotf_link" && -n "$dotf_target" && "$(readlink -f "$dotf_link" 2>/dev/null)" == "$dotf_target" ]]; then
     ok "~/.local/bin/dotf -> this repo"
   else
     warn "~/.local/bin/dotf missing or not linked into this repo - run apply.sh"

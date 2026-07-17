@@ -5,6 +5,28 @@ intentionally CLI and service focused: no desktop apps, no GUI terminal
 config, and no private SSH or GitHub auth state. Clone it, run one script,
 and get a fully configured shell, editor, and toolchain for any user.
 
+## Bootstrap (fresh server)
+
+As a **non-root user with sudo** on Ubuntu 24.04:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/VimukthiShohan/ubuntu-server-dotfiles/main/bootstrap.sh | bash
+```
+
+Clones the repo to `~/.dotfiles` (override: `DOTFILES_DIR`) and runs the full setup.
+Safe to re-run; refuses to touch a `~/.dotfiles` that isn't this repo.
+
+## Daily driver: dotf
+
+Installed to `~/.local/bin/dotf` by the stow step.
+
+| command | does |
+|---|---|
+| `dotf apply [--fresh]` | converge this machine (`apply.sh`) |
+| `dotf doctor` | read-only drift check (`doctor.sh`, exit 1 on drift) |
+| `dotf update` | `git pull --ff-only`, then converge (refuses on a dirty tree) |
+| `dotf test` | guard test + `bash -n` + `zsh -n` |
+
 ## What This Manages
 
 | Concern | Source of truth | Applied by |
@@ -142,6 +164,7 @@ Highlights installed by the manifests that have no stow package of their own:
 | `eza` | `~/.config/eza/theme.yml` | `eza` theme |
 | `btop` | `~/.config/btop/btop.conf` | `btop` config |
 | `neofetch` | `~/.config/neofetch/config.conf` | Optional terminal system summary |
+| `dotf` | `~/.local/bin/dotf` | Repo CLI veneer (`apply`/`doctor`/`update`/`test`) |
 
 This repo does not stow SSH private keys, GitHub host auth, desktop app
 settings, or machine-local secrets. Put machine-only secrets in untracked
@@ -153,7 +176,7 @@ Run the static guard before committing changes:
 
 ```bash
 bash tests/ubuntu-config.bash
-bash -n setup.sh apply.sh doctor.sh setup/install-tools.sh setup/tools/installers.sh tests/ubuntu-config.bash
+bash -n setup.sh apply.sh doctor.sh bootstrap.sh setup/install-tools.sh setup/tools/installers.sh tests/ubuntu-config.bash home/dotf/.local/bin/dotf
 zsh -n home/zsh/.zshrc home/zsh/.config/zsh/*.zsh
 ```
 

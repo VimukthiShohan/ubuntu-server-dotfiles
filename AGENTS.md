@@ -17,6 +17,7 @@ apply.sh                 ← idempotent converge: apt manifest → bat/fd shims 
                             → install-tools.sh → docker service → zsh login shell
                             → clone fzf-git/tpm/p10k (non-fatal) → tmux config reload
 doctor.sh                ← read-only drift/status checks (exits 1 on issues); never mutates
+bootstrap.sh             ← curl target: Ubuntu gate → git → verified HTTPS clone to ~/.dotfiles → setup.sh
 setup/
   apt-packages.txt       ← apt manifest (one package per line, # comments ignored)
   install-tools.sh       ← bootstraps Neovim (official tarball), fnm/node, bun, pnpm, rust, uv;
@@ -26,7 +27,7 @@ setup/
     installers.sh        ← guarded curl installers (aws-cli, lua-language-server, zsh-completions)
 home/                    ← GNU Stow packages (one dir per tool) linked into $HOME:
                             zsh · git · tmux · nvim · nvim-nightly · gh · lazygit · eza ·
-                            btop · neofetch
+                            btop · neofetch · dotf
 scripts/
   tmx/                   ← tmux dev-workspace bootstrapper (main.sh + lib/ + config/, `tmx` alias)
   switch_nvim_config.sh  ← swap ~/.config/nvim between stable and nightly configs
@@ -49,12 +50,14 @@ edit manifest/dotfile → bash tests/ubuntu-config.bash → ./apply.sh
   (or `installers.sh` if curl-installed) · new dotfile → `home/<pkg>/` mirroring its `$HOME` path
 - Never hand-install on a machine and call it done — if it isn't in a manifest or stow package,
   it doesn't exist.
+- Fresh machine one-liner → `curl -fsSL https://raw.githubusercontent.com/VimukthiShohan/ubuntu-server-dotfiles/main/bootstrap.sh | bash`
+- `dotf` (stowed to `~/.local/bin`) wraps the scripts: `dotf apply|doctor|update|test` — `dotf test` runs the verification block below.
 
 ## Verification (run before committing)
 
 ```bash
 bash tests/ubuntu-config.bash
-bash -n setup.sh apply.sh doctor.sh setup/install-tools.sh setup/tools/installers.sh tests/ubuntu-config.bash
+bash -n setup.sh apply.sh doctor.sh bootstrap.sh setup/install-tools.sh setup/tools/installers.sh tests/ubuntu-config.bash home/dotf/.local/bin/dotf
 zsh -n home/zsh/.zshrc home/zsh/.config/zsh/*.zsh
 ```
 

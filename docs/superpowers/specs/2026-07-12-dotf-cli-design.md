@@ -2,7 +2,7 @@
 
 Date: 2026-07-12
 Status: approved (brainstorm complete, pending implementation)
-Target release: **v2.0.0** (tag + GitHub release, after all tasks land on `main`; current release is v1.0.0)
+Target release: **v2.0.0** (tag + GitHub release, after all tasks land on `main`; current release is v1.1.1)
 
 ## Goal
 
@@ -45,8 +45,9 @@ home/dotf/.local/bin/dotf      ← new stow package: the CLI (single bash file, 
 ### Repo discovery (zero config)
 
 Stow links `~/.local/bin/dotf` → `home/dotf/.local/bin/dotf` inside the repo.
-`readlink -f "$0"` resolves the symlink to the real file; the repo root is four `dirname` steps up
-(`…/home/dotf/.local/bin/dotf` → strip `bin`, `.local`, `dotf`, `home`).
+`readlink -f "$0"` resolves the symlink to the real file; the repo root is five `dirname` steps up
+(`…/home/dotf/.local/bin/dotf` is a file, so the first `dirname` strips it before any directory →
+strip `dotf` (file), `bin`, `.local`, `dotf`, `home`).
 Works wherever the repo is cloned (`~/dotfiles` on servers, `~/Projects/Private/dotfiles` on the
 authoring machine). If the resolved path does not look like the repo (no `apply.sh` at the derived
 root), fail with a clear error instead of guessing.

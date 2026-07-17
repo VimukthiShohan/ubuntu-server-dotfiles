@@ -133,6 +133,27 @@ assert_no_pattern 'git@|[a-z+]*ssh[a-z+]*://|://[^/@"]*@' "bootstrap.sh"
 assert_no_pattern '\b(brew|cask|mas|softwareupdate|xcode-select|dockutil|yabai|skhd|ghostty|zed)\b' "bootstrap.sh"
 assert_contains '\.dotfiles' "bootstrap.sh"
 assert_contains 'main "\$@"' "bootstrap.sh"
+# REPO_HTTPS must be assigned exactly once and be the value that is cloned, so no
+# later reassignment or env-override can repoint the clone at a different URL.
+if (( $(grep -cE '^[[:space:]]*REPO_HTTPS=' "$ROOT/bootstrap.sh") != 1 )); then
+  fail "bootstrap.sh must assign REPO_HTTPS exactly once (no reassignment/env override)"
+fi
+# The clone must be binding, not merely present: there must be exactly one
+# *uncommented* `clone` command and it must be the hardened, main-pinned clone of
+# $REPO_HTTPS. Checking uncommented lines only defeats the "commented decoy of the
+# good line + a live clone of another URL/var" bypass. (Function names like
+# verify_clone end the line or precede '(', so they are not counted; echo strings
+# say "checkout", not "clone ".)
+uncommented_clone_lines="$(grep -E 'clone[[:space:]]' "$ROOT/bootstrap.sh" | grep -vE '^[[:space:]]*#' || true)"
+n_clone="$(printf '%s' "$uncommented_clone_lines" | grep -c . || true)"
+if (( n_clone != 1 )); then
+  fail "bootstrap.sh must contain exactly one uncommented clone command (found $n_clone)"
+fi
+if ! printf '%s\n' "$uncommented_clone_lines" | grep -qF 'git_hardened clone --branch main "$REPO_HTTPS" "$TARGET"'; then
+  fail 'bootstrap.sh clone must be exactly: git_hardened clone --branch main "$REPO_HTTPS" "$TARGET"'
+fi
+# Belt and suspenders: no clone may pull from a hardcoded URL either.
+assert_no_pattern 'clone[[:space:]][^#]*https?://' "bootstrap.sh"
 
 # dotf CLI: stowed veneer over the repo scripts
 [[ -x "$ROOT/home/dotf/.local/bin/dotf" ]] || fail "home/dotf/.local/bin/dotf must exist and be executable"

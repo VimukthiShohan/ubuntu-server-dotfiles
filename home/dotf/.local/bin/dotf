@@ -3,6 +3,7 @@
 # Spec: docs/superpowers/specs/2026-07-12-dotf-cli-design.md
 
 set -euo pipefail
+shopt -s inherit_errexit   # a failing $(...) must abort, never fall open to a pull
 
 usage() {
   cat <<'EOF'
@@ -31,8 +32,17 @@ repo_root() {
 
 cmd_update() {
   local root="$1"
-  if [[ -n "$(git -C "$root" status --porcelain)" ]]; then
-    echo "!! dotf update: working tree at $root is dirty; commit or stash first." >&2
+  # Refuse only on tracked modifications; untracked files are safe for a
+  # --ff-only pull (git aborts on its own if the pull would clobber one).
+  # Capture the status exit code explicitly: a git error must abort the update,
+  # not fall open to a pull (set -e does not catch a failing $(...) here).
+  local status
+  if ! status="$(git -C "$root" status --porcelain --untracked-files=no)"; then
+    echo "!! dotf update: cannot read git status at $root (is it a git repo?)." >&2
+    exit 1
+  fi
+  if [[ -n "$status" ]]; then
+    echo "!! dotf update: tracked changes at $root; commit or stash first." >&2
     exit 1
   fi
   git -C "$root" pull --ff-only

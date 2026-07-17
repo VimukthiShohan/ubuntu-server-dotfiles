@@ -3,7 +3,7 @@
 # Usage: ./apply.sh [--fresh]
 #   --fresh  use stow --adopt for first-time conflict handling.
 
-set -euo pipefail
+set -euEo pipefail
 trap 'echo "!! apply.sh: step above failed. Fix it, then re-run this script."' ERR
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -117,6 +117,7 @@ post_install_repos() {
 stow_dotfiles() {
   section "Stowing dotfiles"
   mkdir -p "$HOME/.config"
+  mkdir -p "$HOME/.local/bin"
 
   local packages=()
   local package_path
@@ -173,8 +174,10 @@ main() {
 
   echo
   if (( ${#CLONE_FAILURES[@]} )); then
-    echo "==> Apply complete with ${#CLONE_FAILURES[@]} clone failure(s) — re-run ./apply.sh to retry."
-    exit 1
+    echo "!! WARNING: Apply complete, but ${#CLONE_FAILURES[@]} repo clone(s) failed (network?):"
+    printf '   - %s\n' "${CLONE_FAILURES[@]}"
+    echo "   Re-run ./apply.sh to retry the missing clone(s); everything else converged."
+    exit 0
   fi
   echo "==> Apply complete."
 }

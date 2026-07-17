@@ -32,6 +32,7 @@ remove_stale "$HOME/.ssh" 1
 echo "==> Re-stowing packages"
 mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
 mkdir -p "$HOME/.config"
+mkdir -p "$HOME/.local/bin"
 cd "$DOTFILES"
 typeset -a packages
 packages=(home/*(/N:t))

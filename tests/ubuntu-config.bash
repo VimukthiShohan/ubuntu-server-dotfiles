@@ -132,6 +132,13 @@ assert_no_pattern '\b(brew|cask|mas|softwareupdate|xcode-select|dockutil|yabai|s
 assert_contains '\.dotfiles' "bootstrap.sh"
 assert_contains 'main "\$@"' "bootstrap.sh"
 
+# dotf CLI: stowed veneer over the repo scripts
+[[ -x "$ROOT/home/dotf/.local/bin/dotf" ]] || fail "home/dotf/.local/bin/dotf must exist and be executable"
+assert_contains 'set -euo pipefail' "home/dotf/.local/bin/dotf"
+assert_contains 'readlink -f' "home/dotf/.local/bin/dotf"
+assert_contains 'git pull --ff-only' "home/dotf/.local/bin/dotf"
+assert_no_pattern 'apt-get|stow -|sudo ' "home/dotf/.local/bin/dotf"
+
 if (( failures > 0 )); then
   exit 1
 fi

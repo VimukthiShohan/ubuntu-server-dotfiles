@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 failures=0
+out="$(mktemp)"
+trap 'rm -f "$out"' EXIT
 
 fail() {
   echo "FAIL: $*" >&2
@@ -17,8 +19,8 @@ assert_absent_path() {
 assert_no_pattern() {
   local pattern="$1"
   local path="$2"
-  if [[ -e "$ROOT/$path" ]] && grep -RInE "$pattern" "$ROOT/$path" >/tmp/ubuntu-config-test.out 2>/dev/null; then
-    cat /tmp/ubuntu-config-test.out >&2
+  if [[ -e "$ROOT/$path" ]] && grep -RInE "$pattern" "$ROOT/$path" >"$out" 2>/dev/null; then
+    cat "$out" >&2
     fail "$path contains forbidden pattern: $pattern"
   fi
 }
@@ -118,16 +120,16 @@ if awk '
   /vim\.opt\.winborder[[:space:]]*=/ && !guarded { print FILENAME ":" FNR ":" $0; bad = 1 }
   guarded && /^end\)/ { guarded = 0 }
   END { exit bad }
-' "$ROOT/home/nvim/.config/nvim/lua/config/set.lua" >/tmp/ubuntu-config-test.out; then
+' "$ROOT/home/nvim/.config/nvim/lua/config/set.lua" >"$out"; then
   :
 else
-  cat /tmp/ubuntu-config-test.out >&2
+  cat "$out" >&2
   fail "Neovim winborder must be guarded because Ubuntu 24.04 ships Neovim 0.9"
 fi
 
 # bootstrap.sh: public HTTPS clone only, no auth state, no macOS artifacts
-assert_contains 'https://github\.com/VimukthiShohan/ubuntu-server-dotfiles' "bootstrap.sh"
-assert_no_pattern 'git@|ssh://' "bootstrap.sh"
+assert_contains '^REPO_HTTPS="https://github\.com/VimukthiShohan/ubuntu-server-dotfiles\.git"$' "bootstrap.sh"
+assert_no_pattern 'git@|[a-z+]*ssh[a-z+]*://|://[^/@"]*@' "bootstrap.sh"
 assert_no_pattern '\b(brew|cask|mas|softwareupdate|xcode-select|dockutil|yabai|skhd|ghostty|zed)\b' "bootstrap.sh"
 assert_contains '\.dotfiles' "bootstrap.sh"
 assert_contains 'main "\$@"' "bootstrap.sh"

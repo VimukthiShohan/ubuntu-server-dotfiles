@@ -84,6 +84,14 @@ main() {
     fi
   fi
 
+  section "Checking dotf CLI"
+  local dotf_link="$HOME/.local/bin/dotf"
+  if [[ -e "$dotf_link" && "$(readlink -f "$dotf_link" 2>/dev/null)" == "$DOTFILES/home/dotf/.local/bin/dotf" ]]; then
+    ok "~/.local/bin/dotf -> this repo"
+  else
+    warn "~/.local/bin/dotf missing or not linked into this repo - run apply.sh"
+  fi
+
   section "Repo git status"
   local dirty
   dirty="$(git -C "$DOTFILES" status --short)"

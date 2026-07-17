@@ -13,7 +13,7 @@ Thumbs.db
 
 # --- Machine-local overrides (never commit) ---
 local.zsh
-*.local
+?*.local
 .env
 .env.*
 

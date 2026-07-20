@@ -162,6 +162,11 @@ assert_contains 'readlink -f' "home/dotf/.local/bin/dotf"
 assert_contains 'git pull --ff-only' "home/dotf/.local/bin/dotf"
 assert_no_pattern 'apt-get|stow -|sudo ' "home/dotf/.local/bin/dotf"
 
+# profile library unit tests (pure bash; must pass everywhere the guard runs)
+if ! bash "$ROOT/tests/profile-lib-test.bash"; then
+  fail "tests/profile-lib-test.bash failed"
+fi
+
 if (( failures > 0 )); then
   exit 1
 fi

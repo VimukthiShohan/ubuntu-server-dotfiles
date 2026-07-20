@@ -6,6 +6,9 @@ set -u
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOLS_DIR="$SCRIPT_DIR/tools"
+# shellcheck source=lib/profile.sh
+. "$SCRIPT_DIR/lib/profile.sh"
+dotf_load_state_ro
 FAILURES=()
 
 run_pkg() {
@@ -154,7 +157,10 @@ install_from_manifest() {
   [[ -f "$file" ]] || return 0
 
   local raw
-  raw="$(grep -vE '^[[:space:]]*(#|$)' "$file" || true)"
+  raw="$(dotf_filter_manifest "$file")" || {
+    FAILURES+=("$name manifest (structure error)")
+    return 0
+  }
   [[ -n "$raw" ]] || return 0
 
   if ! command -v "$pm" >/dev/null 2>&1; then
@@ -174,14 +180,24 @@ install_from_manifest() {
 main() {
   export PATH="$HOME/.local/bin:$HOME/.local/share/fnm:$HOME/.fnm:$HOME/go/bin:$HOME/.cargo/bin:$PATH"
 
-  echo "==> Bootstrapping package managers"
-  ensure_neovim || FAILURES+=("neovim bootstrap")
-  ensure_node || FAILURES+=("node/fnm bootstrap")
-  ensure_bun  || FAILURES+=("bun bootstrap")
-  ensure_pnpm || FAILURES+=("pnpm bootstrap")
-  ensure_rust || FAILURES+=("rust bootstrap")
-  ensure_uv   || FAILURES+=("uv bootstrap")
-  check_go
+  echo "==> Bootstrapping package managers (profile: $DOTF_PROFILE)"
+  if dotf_group_active nvim; then
+    ensure_neovim || FAILURES+=("neovim bootstrap")
+  fi
+  if dotf_group_active node; then
+    ensure_node || FAILURES+=("node/fnm bootstrap")
+    ensure_bun  || FAILURES+=("bun bootstrap")
+    ensure_pnpm || FAILURES+=("pnpm bootstrap")
+  fi
+  if dotf_group_active rust; then
+    ensure_rust || FAILURES+=("rust bootstrap")
+  fi
+  if dotf_group_active python; then
+    ensure_uv || FAILURES+=("uv bootstrap")
+  fi
+  if dotf_group_active go-tools; then
+    check_go
+  fi
 
   if [[ -f "$TOOLS_DIR/installers.sh" ]]; then
     echo "==> Installing shell-script CLIs (tools/installers.sh)"

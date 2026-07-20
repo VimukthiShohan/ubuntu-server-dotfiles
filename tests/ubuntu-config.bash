@@ -182,6 +182,22 @@ assert_contains 'readlink -f' "home/dotf/.local/bin/dotf"
 assert_contains 'git pull --ff-only' "home/dotf/.local/bin/dotf"
 assert_no_pattern 'apt-get|stow -|sudo ' "home/dotf/.local/bin/dotf"
 
+# bootstrap new-user step: prompts must use /dev/tty (stdin is detached),
+# handoff must be guarded and terminal, and sourcing must not execute main.
+assert_contains 'DOTF_BOOTSTRAP_HANDOFF' "bootstrap.sh"
+assert_contains 'adduser "\$username" </dev/tty' "bootstrap.sh"
+assert_contains 'BASH_SOURCE\[0\]}" == "\$0"' "bootstrap.sh"
+assert_no_pattern 'cp ~/.ssh/authorized_keys|cp "\$HOME/.ssh/authorized_keys"' "bootstrap.sh"
+
+# username validation + symlink rejection are testable without mutating anything
+if ! ( . "$ROOT/bootstrap.sh"
+       dotf_valid_username alice &&
+       ! dotf_valid_username 'Bad User' &&
+       ! dotf_valid_username '' &&
+       ! dotf_valid_username '1abc' ); then
+  fail "bootstrap.sh dotf_valid_username does not enforce ^[a-z_][a-z0-9_-]*\$"
+fi
+
 # profile library unit tests (pure bash; must pass everywhere the guard runs)
 if ! bash "$ROOT/tests/profile-lib-test.bash"; then
   fail "tests/profile-lib-test.bash failed"

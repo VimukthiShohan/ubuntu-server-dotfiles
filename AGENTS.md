@@ -22,17 +22,22 @@ setup/
   apt-packages.txt       ← apt manifest (one package per line, # comments ignored)
   install-tools.sh       ← bootstraps Neovim (official tarball), fnm/node, bun, pnpm, rust, uv;
                             then installs the tools/ manifests
+  lib/profile.sh          ← profiles/groups/state-file registry; sourced by every script below
+  profile-select.sh      ← interactive profile/group picker; writes the state file
+  skills.sh               ← optional AI skill framework installer (SuperClaude, Superpowers, …)
   tools/
     npm.txt · bun.txt · cargo.txt · go.txt   ← per-package-manager manifests
     installers.sh        ← guarded curl installers (aws-cli, lua-language-server, zsh-completions)
 home/                    ← GNU Stow packages (one dir per tool) linked into $HOME:
-                            zsh · git · tmux · nvim · nvim-nightly · gh · lazygit · eza ·
+                            zsh · git · git-dev · tmux · nvim · nvim-nightly · gh · lazygit · eza ·
                             btop · neofetch · dotf
 scripts/
   tmx/                   ← tmux dev-workspace bootstrapper (main.sh + lib/ + config/, `tmx` alias)
   switch_nvim_config.sh  ← swap ~/.config/nvim between stable and nightly configs
   migrate-to-stow.sh     ← one-time migration helper
-tests/ubuntu-config.bash ← static guard: forbidden/required patterns (see Hard Constraints)
+tests/
+  ubuntu-config.bash     ← static guard: forbidden/required patterns (see Hard Constraints)
+  profile-lib-test.bash  ← pure-bash unit tests for setup/lib/profile.sh (parse/closure/manifest filter)
 .stowrc                  ← --dir=home --target=~ plus ignore patterns
 ```
 
@@ -48,16 +53,24 @@ edit manifest/dotfile → bash tests/ubuntu-config.bash → ./apply.sh
   inspect drift → `./doctor.sh`
 - New apt package → `setup/apt-packages.txt` · new dev CLI → the matching `setup/tools/*.txt`
   (or `installers.sh` if curl-installed) · new dotfile → `home/<pkg>/` mirroring its `$HOME` path
+  — every manifest is group-sectioned (`## group: <name>` headers), so add the new line under the
+  right group header, not appended blindly (guard-enforced).
+- Profiles gate what actually installs: state lives at
+  `${XDG_CONFIG_HOME:-$HOME/.config}/dotf/profile` (outside the repo, never committed). Change it
+  with `dotf profile` (re-select profile/groups, then converge) or `dotf skills` (re-select and
+  (re)install optional AI skill frameworks).
 - Never hand-install on a machine and call it done — if it isn't in a manifest or stow package,
   it doesn't exist.
 - Fresh machine one-liner → `f=$(mktemp) && curl -fsSL https://raw.githubusercontent.com/VimukthiShohan/ubuntu-server-dotfiles/main/bootstrap.sh -o "$f" && bash "$f"` (download-then-run, so a truncated download can't run a partial script or report false success)
-- `dotf` (stowed to `~/.local/bin`) wraps the scripts: `dotf apply|doctor|update|test` — `dotf test` runs the verification block below.
+- `dotf` (stowed to `~/.local/bin`) wraps the scripts: `dotf apply|doctor|update|profile|skills|test` — `dotf test` runs the verification block below.
 
 ## Verification (run before committing)
 
 ```bash
 bash tests/ubuntu-config.bash
-bash -n setup.sh apply.sh doctor.sh bootstrap.sh setup/install-tools.sh setup/tools/installers.sh tests/ubuntu-config.bash home/dotf/.local/bin/dotf
+bash -n setup.sh apply.sh doctor.sh bootstrap.sh setup/install-tools.sh setup/tools/installers.sh \
+  setup/lib/profile.sh setup/profile-select.sh setup/skills.sh tests/ubuntu-config.bash \
+  tests/profile-lib-test.bash home/dotf/.local/bin/dotf
 zsh -n home/zsh/.zshrc home/zsh/.config/zsh/*.zsh
 ```
 
@@ -85,6 +98,9 @@ Most are gated by `tests/ubuntu-config.bash` — a violation fails the guard.
 - **Script discipline:** `apply.sh`/`install-tools.sh` stay idempotent and safe to re-run;
   `doctor.sh` stays strictly read-only; manifest readers ignore blank lines and `#` comments —
   keep that format.
+- **Profiles:** the state file is parsed, never sourced — no state-file content can execute.
+  Manifest lines must sit under a `## group: <name>` header naming a group known to
+  `setup/lib/profile.sh` (guard-enforced).
 
 ## Commit Convention
 

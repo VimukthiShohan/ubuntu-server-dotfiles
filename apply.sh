@@ -7,6 +7,9 @@ set -euEo pipefail
 trap 'echo "!! apply.sh: step above failed. Fix it, then re-run this script."' ERR
 
 DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=setup/lib/profile.sh
+. "$DOTFILES/setup/lib/profile.sh"
+dotf_load_state_ro
 APT_PACKAGES="$DOTFILES/setup/apt-packages.txt"
 FRESH=0
 while [[ $# -gt 0 ]]; do
@@ -26,14 +29,8 @@ section() {
   echo "==> $*"
 }
 
-read_manifest() {
-  local file="$1"
-  [[ -f "$file" ]] || return 0
-  grep -vE '^[[:space:]]*(#|$)' "$file" || true
-}
-
 install_apt_packages() {
-  section "Installing apt CLI and service packages"
+  section "Installing apt CLI and service packages (profile: $DOTF_PROFILE)"
   sudo -v
   sudo apt-get update
 
@@ -45,7 +42,7 @@ install_apt_packages() {
     if ! sudo apt-get install -y "$package"; then
       failures+=("$package")
     fi
-  done < <(read_manifest "$APT_PACKAGES")
+  done < <(dotf_filter_manifest "$APT_PACKAGES")
 
   if (( ${#failures[@]} )); then
     echo
@@ -70,6 +67,11 @@ create_ubuntu_command_shims() {
 
 configure_services() {
   section "Configuring services"
+
+  if ! dotf_group_active services; then
+    echo "  -> services group inactive; skipping"
+    return 0
+  fi
 
   if command -v systemctl >/dev/null 2>&1 && systemctl list-unit-files docker.service >/dev/null 2>&1; then
     sudo systemctl enable --now docker
@@ -139,13 +141,17 @@ stow_dotfiles() {
   mkdir -p "$HOME/.local/bin"
 
   local packages=()
-  local package_path
-  while IFS= read -r package_path; do
-    packages+=("$(basename "$package_path")")
-  done < <(find "$DOTFILES/home" -mindepth 1 -maxdepth 1 -type d | sort)
+  local package
+  while IFS= read -r package; do
+    [[ -d "$DOTFILES/home/$package" ]] || {
+      echo "!! stow package '$package' missing under $DOTFILES/home" >&2
+      exit 1
+    }
+    packages+=("$package")
+  done < <(dotf_stow_packages)
 
   if (( ${#packages[@]} == 0 )); then
-    echo "!! No stow packages found under $DOTFILES/home"
+    echo "!! No stow packages resolved for profile '$DOTF_PROFILE'"
     exit 1
   fi
 
@@ -190,6 +196,11 @@ main() {
   configure_login_shell
   post_install_repos
   reload_tmux_config
+
+  if dotf_group_active ai-clis && [[ -x "$DOTFILES/setup/skills.sh" ]]; then
+    section "AI skill frameworks"
+    "$DOTFILES/setup/skills.sh" || true
+  fi
 
   echo
   if (( ${#CLONE_FAILURES[@]} )); then

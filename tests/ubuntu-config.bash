@@ -3,6 +3,8 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 failures=0
+out="$(mktemp)"
+trap 'rm -f "$out"' EXIT
 
 fail() {
   echo "FAIL: $*" >&2
@@ -17,8 +19,8 @@ assert_absent_path() {
 assert_no_pattern() {
   local pattern="$1"
   local path="$2"
-  if [[ -e "$ROOT/$path" ]] && grep -RInE "$pattern" "$ROOT/$path" >/tmp/ubuntu-config-test.out 2>/dev/null; then
-    cat /tmp/ubuntu-config-test.out >&2
+  if [[ -e "$ROOT/$path" ]] && grep -RInE "$pattern" "$ROOT/$path" >"$out" 2>/dev/null; then
+    cat "$out" >&2
     fail "$path contains forbidden pattern: $pattern"
   fi
 }
@@ -118,12 +120,47 @@ if awk '
   /vim\.opt\.winborder[[:space:]]*=/ && !guarded { print FILENAME ":" FNR ":" $0; bad = 1 }
   guarded && /^end\)/ { guarded = 0 }
   END { exit bad }
-' "$ROOT/home/nvim/.config/nvim/lua/config/set.lua" >/tmp/ubuntu-config-test.out; then
+' "$ROOT/home/nvim/.config/nvim/lua/config/set.lua" >"$out"; then
   :
 else
-  cat /tmp/ubuntu-config-test.out >&2
+  cat "$out" >&2
   fail "Neovim winborder must be guarded because Ubuntu 24.04 ships Neovim 0.9"
 fi
+
+# bootstrap.sh: public HTTPS clone only, no auth state, no macOS artifacts
+assert_contains '^REPO_HTTPS="https://github\.com/VimukthiShohan/ubuntu-server-dotfiles\.git"$' "bootstrap.sh"
+assert_no_pattern 'git@|[a-z+]*ssh[a-z+]*://|://[^/@"]*@' "bootstrap.sh"
+assert_no_pattern '\b(brew|cask|mas|softwareupdate|xcode-select|dockutil|yabai|skhd|ghostty|zed)\b' "bootstrap.sh"
+assert_contains '\.dotfiles' "bootstrap.sh"
+assert_contains 'main "\$@"' "bootstrap.sh"
+# REPO_HTTPS must be assigned exactly once and be the value that is cloned, so no
+# later reassignment or env-override can repoint the clone at a different URL.
+if (( $(grep -cE '^[[:space:]]*REPO_HTTPS=' "$ROOT/bootstrap.sh") != 1 )); then
+  fail "bootstrap.sh must assign REPO_HTTPS exactly once (no reassignment/env override)"
+fi
+# The clone must be binding, not merely present: there must be exactly one
+# *uncommented* `clone` command and it must be the hardened, main-pinned clone of
+# $REPO_HTTPS. Checking uncommented lines only defeats the "commented decoy of the
+# good line + a live clone of another URL/var" bypass. (Function names like
+# verify_clone end the line or precede '(', so they are not counted; echo strings
+# say "checkout", not "clone ".)
+uncommented_clone_lines="$(grep -E 'clone[[:space:]]' "$ROOT/bootstrap.sh" | grep -vE '^[[:space:]]*#' || true)"
+n_clone="$(printf '%s' "$uncommented_clone_lines" | grep -c . || true)"
+if (( n_clone != 1 )); then
+  fail "bootstrap.sh must contain exactly one uncommented clone command (found $n_clone)"
+fi
+if ! printf '%s\n' "$uncommented_clone_lines" | grep -qF 'git_hardened clone --branch main "$REPO_HTTPS" "$TARGET"'; then
+  fail 'bootstrap.sh clone must be exactly: git_hardened clone --branch main "$REPO_HTTPS" "$TARGET"'
+fi
+# Belt and suspenders: no clone may pull from a hardcoded URL either.
+assert_no_pattern 'clone[[:space:]][^#]*https?://' "bootstrap.sh"
+
+# dotf CLI: stowed veneer over the repo scripts
+[[ -x "$ROOT/home/dotf/.local/bin/dotf" ]] || fail "home/dotf/.local/bin/dotf must exist and be executable"
+assert_contains 'set -euo pipefail' "home/dotf/.local/bin/dotf"
+assert_contains 'readlink -f' "home/dotf/.local/bin/dotf"
+assert_contains 'git pull --ff-only' "home/dotf/.local/bin/dotf"
+assert_no_pattern 'apt-get|stow -|sudo ' "home/dotf/.local/bin/dotf"
 
 if (( failures > 0 )); then
   exit 1

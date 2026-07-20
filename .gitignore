@@ -14,6 +14,8 @@ Thumbs.db
 # --- Machine-local overrides (never commit) ---
 local.zsh
 *.local
+# ...but the dotf stow package legitimately ships a .local/ tree; unignore only it.
+!home/dotf/.local/
 .env
 .env.*
 

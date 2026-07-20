@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+# dotf - veneer over this repo's scripts. Delegates only; owns no converge logic.
+# Spec: docs/superpowers/specs/2026-07-12-dotf-cli-design.md
+
+set -euo pipefail
+shopt -s inherit_errexit   # a failing $(...) must abort, never fall open to a pull
+
+usage() {
+  cat <<'EOF'
+Usage: dotf <command>
+
+Commands:
+  apply [--fresh]   Converge this machine (apply.sh; --fresh adopts pre-existing files)
+  doctor            Read-only drift check (doctor.sh; exit 1 on drift)
+  update            git pull --ff-only in the repo, then converge
+  test              Guard test + bash -n + zsh -n (pre-commit verification)
+  help              Show this help
+EOF
+}
+
+repo_root() {
+  local self root
+  self="$(readlink -f "${BASH_SOURCE[0]}")"
+  # <root>/home/dotf/.local/bin/dotf -> strip dotf, bin, .local, dotf, home
+  root="$(dirname "$(dirname "$(dirname "$(dirname "$(dirname "$self")")")")")"
+  if [[ ! -f "$root/apply.sh" ]]; then
+    echo "!! dotf: cannot locate repo root (resolved: $self, derived: $root)" >&2
+    exit 1
+  fi
+  printf '%s\n' "$root"
+}
+
+cmd_update() {
+  local root="$1"
+  # Refuse only on tracked modifications; untracked files are safe for a
+  # --ff-only pull (git aborts on its own if the pull would clobber one).
+  # Capture the status exit code explicitly: a git error must abort the update,
+  # not fall open to a pull (set -e does not catch a failing $(...) here).
+  local status
+  if ! status="$(git -C "$root" status --porcelain --untracked-files=no)"; then
+    echo "!! dotf update: cannot read git status at $root (is it a git repo?)." >&2
+    exit 1
+  fi
+  if [[ -n "$status" ]]; then
+    echo "!! dotf update: tracked changes at $root; commit or stash first." >&2
+    exit 1
+  fi
+  git -C "$root" pull --ff-only
+  exec "$root/apply.sh"
+}
+
+cmd_test() {
+  local root="$1"
+  bash "$root/tests/ubuntu-config.bash"
+  bash -n \
+    "$root/setup.sh" \
+    "$root/apply.sh" \
+    "$root/doctor.sh" \
+    "$root/bootstrap.sh" \
+    "$root/setup/install-tools.sh" \
+    "$root/setup/tools/installers.sh" \
+    "$root/tests/ubuntu-config.bash" \
+    "$root/home/dotf/.local/bin/dotf"
+  zsh -n "$root/home/zsh/.zshrc" "$root"/home/zsh/.config/zsh/*.zsh
+  echo "dotf test: all checks passed"
+}
+
+main() {
+  local cmd="${1:-help}"
+  if (( $# > 0 )); then shift; fi
+
+  case "$cmd" in
+    help|-h|--help) usage; return ;;
+  esac
+
+  local root
+  root="$(repo_root)"
+
+  case "$cmd" in
+    apply)  exec "$root/apply.sh" "$@" ;;
+    doctor) exec "$root/doctor.sh" ;;
+    update) cmd_update "$root" ;;
+    test)   cmd_test "$root" ;;
+    *)      usage >&2; exit 1 ;;
+  esac
+}
+
+main "$@"

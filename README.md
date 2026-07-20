@@ -68,6 +68,12 @@ chmod +x setup.sh apply.sh doctor.sh setup/install-tools.sh setup/tools/installe
 After `apply.sh` adds your user to the `docker` group, log out and back in
 before using Docker without `sudo`.
 
+To remove a user and delete its home directory (run as a different account):
+
+```bash
+sudo deluser --remove-home <username>
+```
+
 ## Git Identity
 
 The stowed `.gitconfig` contains no personal identity. Put yours in

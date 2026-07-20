@@ -46,6 +46,16 @@ assert_no_pattern '/opt/homebrew|/Applications|Library/Application Support|Libra
 assert_no_pattern 'nvm' "setup"
 assert_no_pattern 'nvm' "home/zsh"
 
+# Minimal profile must keep a working shell: no unguarded aliases to
+# optional-group binaries, and git's delta/nvim config must live in the
+# ergonomics-mapped git-dev include, not core.
+assert_no_pattern "^alias (ls|ll|tree)='eza" "home/zsh/.config/zsh/30-aliases.zsh"
+assert_no_pattern "^alias cat='bat'" "home/zsh/.config/zsh/30-aliases.zsh"
+assert_no_pattern "^alias vim='nvim'" "home/zsh/.config/zsh/30-aliases.zsh"
+assert_no_pattern 'delta|nvim' "home/git/.gitconfig"
+assert_contains 'path = ~/\.config/git/dev\.gitconfig' "home/git/.gitconfig"
+assert_contains 'delta --dark' "home/git-dev/.config/git/dev.gitconfig"
+
 if grep -qxE 'lua-language-server|awscli' "$ROOT/setup/apt-packages.txt"; then
   fail "setup/apt-packages.txt should not declare unavailable Ubuntu 24.04 apt packages lua-language-server or awscli"
 fi

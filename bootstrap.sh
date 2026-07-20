@@ -10,7 +10,7 @@
 # eat streamed script text.
 
 set -euEo pipefail
-shopt -s inherit_errexit   # command-substitution failures must abort, never fail open
+shopt -s inherit_errexit 2>/dev/null || true   # bash 4.4+; degrades to a no-op under 3.2 (guard sources this file)
 trap 'echo "!! bootstrap.sh: step above failed. Fix it, then re-run this script."' ERR
 
 REPO_HTTPS="https://github.com/VimukthiShohan/ubuntu-server-dotfiles.git"

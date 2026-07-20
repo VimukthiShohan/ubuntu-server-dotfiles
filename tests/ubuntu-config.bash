@@ -79,6 +79,16 @@ assert_contains 'install_from_manifest "cargo".*cargo install --locked' "setup/i
 assert_contains '^yazi-build$' "setup/tools/cargo.txt"
 assert_no_pattern '^yazi-(fm|cli)$' "setup/tools/cargo.txt"
 assert_contains '^rtk$' "setup/tools/cargo.txt"
+
+# Every manifest must be group-sectioned; headers must name known groups.
+. "$ROOT/setup/lib/profile.sh"
+for manifest in setup/apt-packages.txt setup/tools/npm.txt setup/tools/bun.txt \
+                setup/tools/cargo.txt setup/tools/go.txt; do
+  if ! dotf_validate_manifest "$ROOT/$manifest" >/dev/null; then
+    fail "$manifest is not a valid group-sectioned manifest"
+  fi
+done
+
 assert_contains 'nvim-linux-\$arch\.tar\.gz' "setup/install-tools.sh"
 assert_contains 'ln -sfn.*nvim.*"\$HOME/.local/bin/nvim"' "setup/install-tools.sh"
 assert_contains 'command -v npm' "setup/install-tools.sh"

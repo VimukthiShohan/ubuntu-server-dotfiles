@@ -1,12 +1,13 @@
-# npm global packages — one per line. Installed with: npm install -g <pkg>
-# Blank lines and lines starting with # are ignored.
+# npm global packages — one per line under a group header.
+# Installed with: npm install -g <pkg>
 # (claude code and opencode are installed via installers.sh, not here.)
-#
-# Examples — uncomment or add your own:
-# typescript
-# tldr
 
-@openai/codex
+## group: node
 portless
-tree-sitter-cli
 typescript
+
+## group: nvim
+tree-sitter-cli
+
+## group: ai-clis
+@openai/codex

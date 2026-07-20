@@ -1,7 +1,8 @@
 # Ubuntu apt packages for headless CLI and service development.
-# One package per line. Blank lines and comments are ignored.
+# One package per line under a '## group: <name>' header. Blank lines and
+# plain # comments are ignored; the group headers drive profile filtering.
 
-# Core shell, build, and source-control tools.
+## group: core
 sudo
 ca-certificates
 software-properties-common
@@ -11,29 +12,33 @@ git
 zsh
 stow
 tmux
+less
+jq
+tree
+unzip
+zip
+rsync
+htop
+ncurses-term
+
+## group: ergonomics
 ripgrep
 fd-find
 fzf
 bat
 eza
-jq
-tree
-less
-unzip
-zip
-rsync
-telnet
-ncurses-term
-direnv
+git-delta
 zoxide
 btop
-htop
 ncdu
-shellcheck
+direnv
 just
-git-delta
+thefuck
+telnet
+shellcheck
+gh
 
-# Build toolchains and native library headers.
+## group: build
 build-essential
 pkg-config
 cmake
@@ -47,21 +52,23 @@ libbz2-dev
 libffi-dev
 liblzma-dev
 
-# Language and app development CLIs available from Ubuntu.
+## group: go-tools
 golang-go
+
+## group: python
 python3-pip
 python3-venv
 pipx
-luarocks
-gh
-thefuck
 
-# Server/service tooling.
+## group: nvim
+luarocks
+
+## group: services
 docker.io
 docker-compose-v2
 postgresql-client
 redis-tools
 
-# Document/image utilities useful in development workflows.
+## group: media
 imagemagick
 poppler-utils

@@ -103,7 +103,10 @@ ensure_neovim() {
   dir="nvim-linux-$arch"
   install_dir="$HOME/.local/share/$dir"
   tmp="$(mktemp -d)" || return 1
-  trap 'rm -rf "$tmp"' RETURN
+  # Self-clear the trap: a RETURN trap is global shell state, not function-local.
+  # Without `trap - RETURN` it fires again when main() returns to the top level,
+  # where $tmp is out of scope, and under `set -u` that aborts the whole run.
+  trap 'rm -rf "$tmp"; trap - RETURN' RETURN
 
   curl -fsSL "https://github.com/neovim/neovim/releases/latest/download/$archive" -o "$tmp/$archive" || return 1
   tar -xzf "$tmp/$archive" -C "$tmp" || return 1

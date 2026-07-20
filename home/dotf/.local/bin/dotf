@@ -13,6 +13,8 @@ Commands:
   apply [--fresh]   Converge this machine (apply.sh; --fresh adopts pre-existing files)
   doctor            Read-only drift check (doctor.sh; exit 1 on drift)
   update            git pull --ff-only in the repo, then converge
+  profile           Re-select profile/groups, then converge (apply.sh)
+  skills            Re-select and install AI skill frameworks
   test              Guard test + bash -n + zsh -n (pre-commit verification)
   help              Show this help
 EOF
@@ -59,7 +61,11 @@ cmd_test() {
     "$root/bootstrap.sh" \
     "$root/setup/install-tools.sh" \
     "$root/setup/tools/installers.sh" \
+    "$root/setup/lib/profile.sh" \
+    "$root/setup/profile-select.sh" \
+    "$root/setup/skills.sh" \
     "$root/tests/ubuntu-config.bash" \
+    "$root/tests/profile-lib-test.bash" \
     "$root/home/dotf/.local/bin/dotf"
   zsh -n "$root/home/zsh/.zshrc" "$root"/home/zsh/.config/zsh/*.zsh
   echo "dotf test: all checks passed"
@@ -80,6 +86,8 @@ main() {
     apply)  exec "$root/apply.sh" "$@" ;;
     doctor) exec "$root/doctor.sh" ;;
     update) cmd_update "$root" ;;
+    profile) "$root/setup/profile-select.sh" && exec "$root/apply.sh" ;;
+    skills)  exec "$root/setup/skills.sh" --reselect ;;
     test)   cmd_test "$root" ;;
     *)      usage >&2; exit 1 ;;
   esac

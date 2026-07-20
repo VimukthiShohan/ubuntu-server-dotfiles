@@ -7,17 +7,22 @@ DOTFILES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 APT_PACKAGES="$DOTFILES/setup/apt-packages.txt"
 ISSUES=0
 
+# shellcheck source=setup/lib/profile.sh
+. "$DOTFILES/setup/lib/profile.sh"
+
 warn()    { echo "  !! $*"; ISSUES=$((ISSUES + 1)); }
 ok()      { echo "  ok $*"; }
 section() { echo; echo "==> $*"; }
 
-read_manifest() {
-  local file="$1"
-  [[ -f "$file" ]] || return 0
-  grep -vE '^[[:space:]]*(#|$)' "$file" || true
-}
-
 main() {
+  section "Profile"
+  dotf_load_state_ro
+  if [[ -f "$(dotf_state_file)" ]]; then
+    ok "profile: $DOTF_PROFILE (groups: ${DOTF_ACTIVE_GROUPS:-core only})"
+  else
+    warn "no profile state — assuming developer; run 'dotf profile' to choose"
+  fi
+
   section "Checking platform"
   if [[ -r /etc/os-release ]]; then
     # shellcheck disable=SC1091
@@ -32,7 +37,9 @@ main() {
   fi
 
   section "Checking required commands"
-  for cmd in sudo apt-get git stow zsh tmux nvim curl; do
+  local cmds="sudo apt-get git stow zsh tmux curl"
+  dotf_group_active nvim && cmds="$cmds nvim"
+  for cmd in $cmds; do
     if command -v "$cmd" >/dev/null 2>&1; then
       ok "$cmd ($(command -v "$cmd"))"
     else
@@ -52,7 +59,7 @@ main() {
       else
         warn "$package missing - run apply.sh"
       fi
-    done < <(read_manifest "$APT_PACKAGES")
+    done < <(dotf_filter_manifest "$APT_PACKAGES")
   fi
 
   section "Checking post-install repos"
@@ -65,10 +72,10 @@ main() {
     warn "stow not found"
   else
     local packages=()
-    local package_path
-    while IFS= read -r package_path; do
-      packages+=("$(basename "$package_path")")
-    done < <(find "$DOTFILES/home" -mindepth 1 -maxdepth 1 -type d | sort)
+    local package
+    while IFS= read -r package; do
+      packages+=("$package")
+    done < <(dotf_stow_packages)
 
     if (( ${#packages[@]} == 0 )); then
       warn "No stow packages found under $DOTFILES/home"

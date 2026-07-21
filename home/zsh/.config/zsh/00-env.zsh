@@ -5,7 +5,11 @@ export HISTFILE="$HOME/.histfile"
 export HISTSIZE=1000
 export SAVEHIST=1000
 
-export EDITOR=nvim
+if command -v nvim >/dev/null 2>&1; then
+  export EDITOR=nvim
+else
+  export EDITOR=vi
+fi
 export BAT_THEME=Dracula
 export EZA_CONFIG_DIR="$HOME/.config/eza"
 export ENABLE_LSP_TOOL=1

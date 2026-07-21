@@ -46,6 +46,16 @@ assert_no_pattern '/opt/homebrew|/Applications|Library/Application Support|Libra
 assert_no_pattern 'nvm' "setup"
 assert_no_pattern 'nvm' "home/zsh"
 
+# Minimal profile must keep a working shell: no unguarded aliases to
+# optional-group binaries, and git's delta/nvim config must live in the
+# ergonomics-mapped git-dev include, not core.
+assert_no_pattern "^alias (ls|ll|tree)='eza" "home/zsh/.config/zsh/30-aliases.zsh"
+assert_no_pattern "^alias cat='bat'" "home/zsh/.config/zsh/30-aliases.zsh"
+assert_no_pattern "^alias vim='nvim'" "home/zsh/.config/zsh/30-aliases.zsh"
+assert_no_pattern 'delta|nvim' "home/git/.gitconfig"
+assert_contains 'path = ~/\.config/git/dev\.gitconfig' "home/git/.gitconfig"
+assert_contains 'delta --dark' "home/git-dev/.config/git/dev.gitconfig"
+
 if grep -qxE 'lua-language-server|awscli' "$ROOT/setup/apt-packages.txt"; then
   fail "setup/apt-packages.txt should not declare unavailable Ubuntu 24.04 apt packages lua-language-server or awscli"
 fi
@@ -79,6 +89,16 @@ assert_contains 'install_from_manifest "cargo".*cargo install --locked' "setup/i
 assert_contains '^yazi-build$' "setup/tools/cargo.txt"
 assert_no_pattern '^yazi-(fm|cli)$' "setup/tools/cargo.txt"
 assert_contains '^rtk$' "setup/tools/cargo.txt"
+
+# Every manifest must be group-sectioned; headers must name known groups.
+. "$ROOT/setup/lib/profile.sh"
+for manifest in setup/apt-packages.txt setup/tools/npm.txt setup/tools/bun.txt \
+                setup/tools/cargo.txt setup/tools/go.txt; do
+  if ! dotf_validate_manifest "$ROOT/$manifest" >/dev/null; then
+    fail "$manifest is not a valid group-sectioned manifest"
+  fi
+done
+
 assert_contains 'nvim-linux-\$arch\.tar\.gz' "setup/install-tools.sh"
 assert_contains 'ln -sfn.*nvim.*"\$HOME/.local/bin/nvim"' "setup/install-tools.sh"
 assert_contains 'command -v npm' "setup/install-tools.sh"
@@ -161,6 +181,27 @@ assert_contains 'set -euo pipefail' "home/dotf/.local/bin/dotf"
 assert_contains 'readlink -f' "home/dotf/.local/bin/dotf"
 assert_contains 'git pull --ff-only' "home/dotf/.local/bin/dotf"
 assert_no_pattern 'apt-get|stow -|sudo ' "home/dotf/.local/bin/dotf"
+
+# bootstrap new-user step: prompts must use /dev/tty (stdin is detached),
+# handoff must be guarded and terminal, and sourcing must not execute main.
+assert_contains 'DOTF_BOOTSTRAP_HANDOFF' "bootstrap.sh"
+assert_contains 'adduser "\$username" </dev/tty' "bootstrap.sh"
+assert_contains 'BASH_SOURCE\[0\]}" == "\$0"' "bootstrap.sh"
+assert_no_pattern 'cp ~/.ssh/authorized_keys|cp "\$HOME/.ssh/authorized_keys"' "bootstrap.sh"
+
+# username validation + symlink rejection are testable without mutating anything
+if ! ( . "$ROOT/bootstrap.sh"
+       dotf_valid_username alice &&
+       ! dotf_valid_username 'Bad User' &&
+       ! dotf_valid_username '' &&
+       ! dotf_valid_username '1abc' ); then
+  fail "bootstrap.sh dotf_valid_username does not enforce ^[a-z_][a-z0-9_-]*\$"
+fi
+
+# profile library unit tests (pure bash; must pass everywhere the guard runs)
+if ! bash "$ROOT/tests/profile-lib-test.bash"; then
+  fail "tests/profile-lib-test.bash failed"
+fi
 
 if (( failures > 0 )); then
   exit 1

@@ -4,6 +4,12 @@
 #       email = you@example.com
 [include]
 	path = ~/.gitconfig.local
+# Developer-experience settings (pager, editor, merge/diff tools) are stowed
+# by the ergonomics group; git ignores a missing include. Keep tool-specific
+# pager/editor/mergetool settings out of this file — the guard forbids naming
+# those tools here.
+[include]
+	path = ~/.config/git/dev.gitconfig
 [init]
 	defaultBranch = main
 [pull]
@@ -13,30 +19,7 @@
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
-
-[core]
-    editor = nvim
-    pager = delta --dark
-
-[interactive]
-    diffFilter = delta --color-only
-
-[delta]
-    navigate = true
-    line-numbers = true
-    side-by-side = false
-    syntax-theme = Dracula
-    true-color = always
-
 [merge]
-    conflictstyle = diff3
-	tool = nvimdiff
-
+	conflictstyle = diff3
 [diff]
-    colorMoved = default
-
-[mergetool "nvimdiff"]
-    layout = "LOCAL,MERGED,REMOTE"
-	path = nvim
-[mergetool]
-	prompt = false
+	colorMoved = default

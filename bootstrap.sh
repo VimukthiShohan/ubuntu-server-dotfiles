@@ -10,7 +10,7 @@
 # eat streamed script text.
 
 set -euEo pipefail
-shopt -s inherit_errexit   # command-substitution failures must abort, never fail open
+shopt -s inherit_errexit 2>/dev/null || true   # bash 4.4+; degrades to a no-op under 3.2 (guard sources this file)
 trap 'echo "!! bootstrap.sh: step above failed. Fix it, then re-run this script."' ERR
 
 REPO_HTTPS="https://github.com/VimukthiShohan/ubuntu-server-dotfiles.git"
@@ -102,6 +102,78 @@ verify_clone() {
   fi
 }
 
+dotf_valid_username() {
+  [[ "$1" =~ ^[a-z_][a-z0-9_-]*$ ]]
+}
+
+# Hardened key copy: resolve home/group from the system, never follow or
+# overwrite through symlinks, install with exact modes/ownership.
+copy_authorized_keys() {
+  local username="$1" home group src="$HOME/.ssh/authorized_keys"
+  if [[ ! -f "$src" ]]; then
+    echo "  !! no $src to copy — set up SSH access for '$username' manually."
+    return 0
+  fi
+  home="$(getent passwd "$username" | cut -d: -f6)"
+  group="$(id -gn "$username")"
+  if [[ -z "$home" || -z "$group" ]]; then
+    echo "  !! cannot resolve home/group for '$username'; skipping key copy." >&2
+    return 0
+  fi
+  if [[ -L "$home/.ssh" || -L "$home/.ssh/authorized_keys" ]]; then
+    echo "  !! $home/.ssh contains symlinks; refusing to copy keys." >&2
+    return 0
+  fi
+  sudo install -d -m 700 -o "$username" -g "$group" "$home/.ssh"
+  sudo install -m 600 -o "$username" -g "$group" "$src" "$home/.ssh/authorized_keys"
+  echo "  -> authorized_keys copied to $home/.ssh/"
+}
+
+# Optional new-user creation + total handoff. One-shot: the re-exec'd copy
+# runs with DOTF_BOOTSTRAP_HANDOFF=1 and skips this entirely. The parent
+# exits right after the handoff — nothing installs for the original account.
+maybe_create_new_user() {
+  [[ "${DOTF_BOOTSTRAP_HANDOFF:-}" == "1" ]] && return 0
+  # Probe /dev/tty by actually opening it (read+write). Its permission bits are
+  # 0666 even with no controlling terminal, so a plain -r/-w test would look
+  # interactive and then crash on the first prompt; opening it is the only
+  # reliable detection.
+  { : >/dev/tty && : </dev/tty; } 2>/dev/null || return 0
+
+  local answer username script_copy
+  printf 'Create a new user for this setup? [y/N] ' > /dev/tty
+  IFS= read -r answer < /dev/tty || return 0
+  [[ "$answer" =~ ^[Yy]$ ]] || return 0
+
+  while :; do
+    printf 'Username: ' > /dev/tty
+    IFS= read -r username < /dev/tty || return 0
+    if ! dotf_valid_username "$username"; then
+      echo "  !! invalid username (must match ^[a-z_][a-z0-9_-]*\$)" > /dev/tty
+      continue
+    fi
+    if getent passwd "$username" >/dev/null 2>&1; then
+      echo "  !! user '$username' already exists — existing accounts are never reused; pick a new name." > /dev/tty
+      continue
+    fi
+    break
+  done
+
+  echo "==> Creating user '$username' (you will set their password)"
+  sudo adduser "$username" </dev/tty >/dev/tty 2>&1
+  sudo usermod -aG sudo "$username"
+  copy_authorized_keys "$username"
+
+  # The mktemp download is 0600 to this user; hand the new user a readable copy.
+  script_copy="$(mktemp /tmp/dotf-bootstrap.XXXXXX)"
+  cp "${BASH_SOURCE[0]}" "$script_copy"
+  chmod 644 "$script_copy"
+
+  echo "==> Handing installation off to '$username' (sudo will ask for THEIR password)"
+  sudo -u "$username" -H env DOTF_BOOTSTRAP_HANDOFF=1 bash "$script_copy"
+  exit $?
+}
+
 main() {
   exec </dev/null
 
@@ -124,6 +196,8 @@ main() {
     echo "!! Run bootstrap as a non-root user with sudo, not as root." >&2
     exit 1
   fi
+
+  maybe_create_new_user
 
   if ! command -v git >/dev/null 2>&1; then
     echo "==> Installing git"
@@ -149,4 +223,6 @@ main() {
   echo "    'dotf' is then on PATH: dotf apply | doctor | update | test"
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi

@@ -27,6 +27,8 @@ Installed to `~/.local/bin/dotf` by the stow step.
 | `dotf apply [--fresh]` | converge this machine (`apply.sh`) |
 | `dotf doctor` | read-only drift check (`doctor.sh`, exit 1 on drift) |
 | `dotf update` | `git pull --ff-only`, then converge (refuses on tracked changes; untracked files OK) |
+| `dotf profile` | re-select profile/groups, then converge (see [Profiles](#profiles)) |
+| `dotf skills` | re-select and (re)install optional AI skill frameworks |
 | `dotf test` | guard test + `bash -n` + `zsh -n` |
 
 ## What This Manages
@@ -40,6 +42,49 @@ Installed to `~/.local/bin/dotf` by the stow step.
 | Script-installed CLIs | `setup/tools/installers.sh` | guarded installers |
 | Dotfiles | `home/*` stow packages | GNU Stow |
 | Docker service | `apply.sh` | `systemctl enable --now docker` |
+
+## Profiles
+
+`setup.sh` (and `bootstrap.sh`, which calls it) asks which profile to converge to, once, on a
+new machine:
+
+| Profile | Installs |
+| --- | --- |
+| `minimal` | `core` only — a working shell, git, and the `dotf` CLI, nothing else |
+| `developer` | every group below (the historical "installs everything" behavior) |
+| `custom` | `core` + groups you pick, plus their dependency closure (picking `nvim`, for example, also pulls in `build` and `node`) |
+
+Groups (`core` is always on, not pickable; `developer`/`custom` add from the rest):
+
+| Group | Contents |
+| --- | --- |
+| core *(always on)* | sudo, git, zsh, stow, tmux, and other server essentials; stows `zsh`, `git`, `tmux`, `dotf` |
+| ergonomics | ripgrep, fd, fzf, bat, eza, delta, zoxide, btop, direnv, `just`, `thefuck`, `shellcheck`, `gh`; stows `eza`, `btop`, `neofetch`, `gh`, `git-dev` |
+| build | build-essential, cmake, ninja, pkg-config, and other native-build headers |
+| services | Docker, docker-compose, postgres/redis CLI clients |
+| nvim | Neovim (tarball), `lua-language-server`, `tree-sitter-cli` — *deps: build, node* |
+| node | `fnm`/Node, bun, pnpm |
+| rust | rustup, `yazi-build`, `rtk` — *dep: build* |
+| go-tools | Go toolchain, `gum`, `lazygit` |
+| python | `pip`/`venv`, `pipx`, `uv` |
+| ai-clis | `claude`, `opencode`, `@openai/codex` — *dep: node* |
+| cloud | AWS CLI v2 |
+| media | imagemagick, poppler-utils |
+
+The choice is saved outside the repo at `${XDG_CONFIG_HOME:-$HOME/.config}/dotf/profile`, so
+re-runs of `apply.sh`/`doctor.sh` never re-ask. Change profile or groups later with `dotf profile`
+(re-selects, then converges); change which optional AI skill frameworks (SuperClaude, Superpowers,
+and friends) are installed with `dotf skills`.
+
+Before any of that, `bootstrap.sh` can optionally create a fresh Linux user and hand the whole
+install off to that account — it asks interactively (`Create a new user for this setup? [y/N]`);
+answering "n" continues as your current account, unchanged.
+
+The bootstrap one-liner itself does not change:
+
+```bash
+f=$(mktemp) && curl -fsSL https://raw.githubusercontent.com/VimukthiShohan/ubuntu-server-dotfiles/main/bootstrap.sh -o "$f" && bash "$f"
+```
 
 ## Fresh Server Setup
 
@@ -128,6 +173,10 @@ Note that `y` is not a binary — it is a zsh wrapper around `yazi` defined in
 Ubuntu packages live in `setup/apt-packages.txt`. Keep it to CLI tools,
 services, and build dependencies.
 
+Every manifest is sectioned with `## group: <name>` headers (see [Profiles](#profiles)) — a
+package only installs when its group is active for the current profile. Add new entries under
+the matching header, not appended at the end of the file.
+
 Language and tool manifests:
 
 | File | Installed with |
@@ -163,7 +212,8 @@ Highlights installed by the manifests that have no stow package of their own:
 | Package | Target | Purpose |
 | --- | --- | --- |
 | `zsh` | `~/.zshrc`, `~/.config/zsh/` | Shell env, aliases, `fnm`, `direnv`, `fzf`, prompt |
-| `git` | `~/.gitconfig`, `~/.config/git/ignore` | Git defaults and delta pager |
+| `git` | `~/.gitconfig`, `~/.config/git/ignore` | Git defaults (vanilla pager/editor; includes `git-dev` if present) |
+| `git-dev` | `~/.config/git/dev.gitconfig` | Delta pager, `nvim` editor/mergetool (ergonomics group) |
 | `tmux` | `~/.tmux.conf` | Tmux prefix, mouse, TPM plugins |
 | `nvim` | `~/.config/nvim/` | Neovim config |
 | `nvim-nightly` | `~/.config/nvim-nightly/` | Alternate Neovim config |
@@ -184,7 +234,9 @@ Run the static guard before committing changes:
 
 ```bash
 bash tests/ubuntu-config.bash
-bash -n setup.sh apply.sh doctor.sh bootstrap.sh setup/install-tools.sh setup/tools/installers.sh tests/ubuntu-config.bash home/dotf/.local/bin/dotf
+bash -n setup.sh apply.sh doctor.sh bootstrap.sh setup/install-tools.sh setup/tools/installers.sh \
+  setup/lib/profile.sh setup/profile-select.sh setup/skills.sh tests/ubuntu-config.bash \
+  tests/profile-lib-test.bash home/dotf/.local/bin/dotf
 zsh -n home/zsh/.zshrc home/zsh/.config/zsh/*.zsh
 ```
 

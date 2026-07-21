@@ -1,7 +1,6 @@
-# go packages — one "import/path@version" per line.
+# go packages — one "import/path@version" per line under a group header.
 # Installed with: go install <import/path@version>   (the @version is REQUIRED)
-# Blank lines and lines starting with # are ignored.
-#
-# Examples — uncomment or add your own:
+
+## group: go-tools
 github.com/charmbracelet/gum@latest
 github.com/jesseduffield/lazygit@latest

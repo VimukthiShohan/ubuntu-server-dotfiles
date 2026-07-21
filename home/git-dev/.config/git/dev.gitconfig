@@ -1,0 +1,20 @@
+# Developer-experience git settings. Stowed by the ergonomics group; the base
+# ~/.gitconfig includes this path and git ignores it when absent (minimal).
+[core]
+	editor = nvim
+	pager = delta --dark
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	line-numbers = true
+	side-by-side = false
+	syntax-theme = Dracula
+	true-color = always
+[merge]
+	tool = nvimdiff
+[mergetool "nvimdiff"]
+	layout = "LOCAL,MERGED,REMOTE"
+	path = nvim
+[mergetool]
+	prompt = false

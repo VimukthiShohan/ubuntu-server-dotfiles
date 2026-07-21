@@ -5,6 +5,11 @@ set -u
 
 export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=../lib/profile.sh
+. "$SCRIPT_DIR/../lib/profile.sh"
+dotf_load_state_ro
+
 install_aws_cli() {
   local tmp
   tmp="$(mktemp -d)" || return 1
@@ -55,12 +60,12 @@ install_zsh_completions() {
   fi
 }
 
-if ! command -v aws >/dev/null 2>&1; then
+if dotf_group_active cloud && ! command -v aws >/dev/null 2>&1; then
   echo "  -> installing aws cli v2"
   install_aws_cli
 fi
 
-if ! command -v lua-language-server >/dev/null 2>&1; then
+if dotf_group_active nvim && ! command -v lua-language-server >/dev/null 2>&1; then
   echo "  -> installing lua-language-server"
   install_lua_language_server
 fi
@@ -70,12 +75,12 @@ if [[ ! -d "$HOME/.zsh/zsh-completions/src" ]]; then
   install_zsh_completions
 fi
 
-if ! command -v claude >/dev/null 2>&1; then
+if dotf_group_active ai-clis && ! command -v claude >/dev/null 2>&1; then
   echo "  -> installing claude code"
   curl -fsSL https://claude.ai/install.sh | bash
 fi
 
-if ! command -v opencode >/dev/null 2>&1; then
+if dotf_group_active ai-clis && ! command -v opencode >/dev/null 2>&1; then
   echo "  -> installing opencode"
   curl -fsSL https://opencode.ai/install | bash
 fi

@@ -26,6 +26,9 @@ main() {
   sudo add-apt-repository -y universe || true
   sudo apt-get update
 
+  echo "==> Selecting profile"
+  "$DOTFILES/setup/profile-select.sh" --if-missing
+
   echo "==> Running full apply (fresh mode)"
   "$DOTFILES/apply.sh" --fresh
 }

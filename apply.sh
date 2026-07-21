@@ -193,7 +193,7 @@ main() {
   # hostage to the network/privileged steps below aborting the run.
   stow_dotfiles
 
-  section "Installing developer CLIs and package managers"
+  section "Installing developer CLIs and package managers (profile: $DOTF_PROFILE)"
   "$DOTFILES/setup/install-tools.sh"
 
   configure_services

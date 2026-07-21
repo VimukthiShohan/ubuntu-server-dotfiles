@@ -60,14 +60,22 @@ install_zsh_completions() {
   fi
 }
 
-if dotf_group_active cloud && ! command -v aws >/dev/null 2>&1; then
-  echo "  -> installing aws cli v2"
-  install_aws_cli
+if dotf_group_active cloud; then
+  if ! command -v aws >/dev/null 2>&1; then
+    echo "  -> installing aws cli v2"
+    install_aws_cli
+  fi
+else
+  echo "  -> skipping aws cli v2 (group 'cloud' not in profile '$DOTF_PROFILE')"
 fi
 
-if dotf_group_active nvim && ! command -v lua-language-server >/dev/null 2>&1; then
-  echo "  -> installing lua-language-server"
-  install_lua_language_server
+if dotf_group_active nvim; then
+  if ! command -v lua-language-server >/dev/null 2>&1; then
+    echo "  -> installing lua-language-server"
+    install_lua_language_server
+  fi
+else
+  echo "  -> skipping lua-language-server (group 'nvim' not in profile '$DOTF_PROFILE')"
 fi
 
 if [[ ! -d "$HOME/.zsh/zsh-completions/src" ]]; then
@@ -75,12 +83,15 @@ if [[ ! -d "$HOME/.zsh/zsh-completions/src" ]]; then
   install_zsh_completions
 fi
 
-if dotf_group_active ai-clis && ! command -v claude >/dev/null 2>&1; then
-  echo "  -> installing claude code"
-  curl -fsSL https://claude.ai/install.sh | bash
-fi
-
-if dotf_group_active ai-clis && ! command -v opencode >/dev/null 2>&1; then
-  echo "  -> installing opencode"
-  curl -fsSL https://opencode.ai/install | bash
+if dotf_group_active ai-clis; then
+  if ! command -v claude >/dev/null 2>&1; then
+    echo "  -> installing claude code"
+    curl -fsSL https://claude.ai/install.sh | bash
+  fi
+  if ! command -v opencode >/dev/null 2>&1; then
+    echo "  -> installing opencode"
+    curl -fsSL https://opencode.ai/install | bash
+  fi
+else
+  echo "  -> skipping AI CLIs: claude, opencode (group 'ai-clis' not in profile '$DOTF_PROFILE')"
 fi

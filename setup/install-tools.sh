@@ -200,7 +200,7 @@ main() {
   fi
 
   if [[ -f "$TOOLS_DIR/installers.sh" ]]; then
-    echo "==> Installing shell-script CLIs (tools/installers.sh)"
+    echo "==> Installing shell-script CLIs (tools/installers.sh, profile: $DOTF_PROFILE)"
     bash "$TOOLS_DIR/installers.sh" || FAILURES+=("shell-script installers")
   fi
 

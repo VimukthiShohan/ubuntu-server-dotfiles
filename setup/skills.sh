@@ -103,8 +103,10 @@ install_one() {
         return 0
       fi
       # No subshell around run_step — FAILURES+=() inside one would be lost.
+      # --global --yes: the skills CLI otherwise prompts for an install scope
+      # (defaulting to Project/CWD), which stalls or mis-scopes unattended runs.
       run_step "react-devtools skill" bash -c \
-        'cd "$HOME" && npx -y skills add callstackincubator/agent-react-devtools --skill react-devtools --agent claude-code'
+        'cd "$HOME" && npx -y skills add callstackincubator/agent-react-devtools --skill react-devtools --agent claude-code --global --yes'
       ;;
     callstack-agent-skills)
       run_step "callstack marketplace" claude plugin marketplace add callstackincubator/agent-skills

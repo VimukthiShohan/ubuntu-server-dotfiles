@@ -88,8 +88,10 @@ f=$(mktemp) && curl -fsSL https://raw.githubusercontent.com/VimukthiShohan/ubunt
 
 ## Fresh Server Setup
 
-If you are setting up a new Linux user, create and test it first (replace
-`<username>` with the account you want):
+`bootstrap.sh` can create a fresh sudo user and copy your `authorized_keys`
+automatically (it asks first — see [Profiles](#profiles)). The steps below are
+the by-hand equivalent if you'd rather provision the user yourself. Create and
+test it first (replace `<username>` with the account you want):
 
 ```bash
 sudo adduser <username>
@@ -106,7 +108,7 @@ Then sign in as that user and run:
 ```bash
 git clone https://github.com/VimukthiShohan/ubuntu-server-dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
-chmod +x setup.sh apply.sh doctor.sh setup/install-tools.sh setup/tools/installers.sh
+chmod +x setup.sh apply.sh doctor.sh setup/install-tools.sh setup/tools/installers.sh setup/profile-select.sh setup/skills.sh
 ./setup.sh
 ```
 
@@ -183,7 +185,7 @@ Language and tool manifests:
 | --- | --- |
 | `setup/tools/npm.txt` | `npm install -g` |
 | `setup/tools/bun.txt` | `bun add -g` |
-| `setup/tools/cargo.txt` | `cargo install` |
+| `setup/tools/cargo.txt` | `cargo install --locked` |
 | `setup/tools/go.txt` | `go install` |
 | `setup/tools/installers.sh` | guarded shell installers |
 
@@ -222,7 +224,7 @@ Highlights installed by the manifests that have no stow package of their own:
 | `eza` | `~/.config/eza/theme.yml` | `eza` theme |
 | `btop` | `~/.config/btop/btop.conf` | `btop` config |
 | `neofetch` | `~/.config/neofetch/config.conf` | Optional terminal system summary |
-| `dotf` | `~/.local/bin/dotf` | Repo CLI veneer (`apply`/`doctor`/`update`/`test`) |
+| `dotf` | `~/.local/bin/dotf` | Repo CLI veneer (`apply`/`doctor`/`update`/`profile`/`skills`/`test`) |
 
 This repo does not stow SSH private keys, GitHub host auth, desktop app
 settings, or machine-local secrets. Put machine-only secrets in untracked

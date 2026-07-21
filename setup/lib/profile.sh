@@ -28,6 +28,24 @@ dotf_group_deps() {
   esac
 }
 
+# One-line "what this installs" summary per group, shown in the custom picker.
+# Keep in sync with the group table in README.md.
+dotf_group_summary() {
+  case "$1" in
+    ergonomics) echo "ripgrep, fd, fzf, bat, eza, delta, zoxide, btop, direnv, just, thefuck, shellcheck, gh" ;;
+    build)      echo "build-essential, cmake, ninja, pkg-config" ;;
+    services)   echo "Docker, docker-compose, postgres/redis CLI clients" ;;
+    nvim)       echo "Neovim, lua-language-server, tree-sitter-cli" ;;
+    node)       echo "fnm/Node, bun, pnpm" ;;
+    rust)       echo "rustup, yazi, rtk" ;;
+    go-tools)   echo "Go toolchain, gum, lazygit" ;;
+    python)     echo "pip/venv, pipx, uv" ;;
+    ai-clis)    echo "claude, opencode, codex" ;;
+    cloud)      echo "AWS CLI v2" ;;
+    media)      echo "imagemagick, poppler-utils" ;;
+  esac
+}
+
 dotf_group_stow_packages() {
   case "$1" in
     core)       echo "zsh git tmux dotf" ;;

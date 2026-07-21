@@ -25,12 +25,15 @@ old_stow_packages() {
 }
 
 prompt_custom_groups() {
-  local i choice picks csv="" idx name
+  local i choice picks csv="" idx name deps
   {
     echo "Groups (core is always included):"
     i=1
     for name in "${DOTF_ALL_GROUPS[@]}"; do
-      echo "  $i) $name"
+      deps="$(dotf_group_deps "$name")"
+      printf '  %2d) %-10s  %s' "$i" "$name" "$(dotf_group_summary "$name")"
+      [[ -n "$deps" ]] && printf '  [+deps: %s]' "${deps// /, }"
+      printf '\n'
       i=$((i + 1))
     done
   } > /dev/tty

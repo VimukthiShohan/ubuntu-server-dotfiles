@@ -137,6 +137,10 @@ post_install_repos() {
 
 stow_dotfiles() {
   section "Stowing dotfiles"
+  # stow calls getcwd() internally; if the inherited CWD is inaccessible (e.g. a
+  # new-user handoff still sitting in the previous user's 0750 home) it aborts with
+  # "current directory ... seems to have vanished". Anchor to the repo, always readable.
+  cd "$DOTFILES"
   mkdir -p "$HOME/.config"
   mkdir -p "$HOME/.local/bin"
 

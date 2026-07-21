@@ -169,8 +169,12 @@ maybe_create_new_user() {
   cp "${BASH_SOURCE[0]}" "$script_copy"
   chmod 644 "$script_copy"
 
-  echo "==> Handing installation off to '$username' (sudo will ask for THEIR password)"
-  sudo -u "$username" -H env DOTF_BOOTSTRAP_HANDOFF=1 bash "$script_copy"
+  echo "==> Handing installation off to '$username' (sudo authenticates you, the invoking user)"
+  # sudo -H sets HOME to the new user's, but NOT the CWD: we're still in the
+  # invoking user's 0750 home, which the new user cannot stat. Later CWD-sensitive
+  # steps (stow's getcwd) would then abort, so cd into the new user's home first.
+  sudo -u "$username" -H env DOTF_BOOTSTRAP_HANDOFF=1 \
+    bash -c 'cd -- "$HOME" && exec bash "$0"' "$script_copy"
   exit $?
 }
 

@@ -1,6 +1,8 @@
 # cargo crates — one per line under a group header.
 # Installed with: cargo install --locked <crate>
 
-## group: rust
+## group: ergonomics
 yazi-build
+
+## group: ai-clis
 rtk

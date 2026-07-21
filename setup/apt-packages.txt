@@ -37,6 +37,8 @@ thefuck
 telnet
 shellcheck
 gh
+imagemagick
+poppler-utils
 
 ## group: build
 build-essential
@@ -68,7 +70,3 @@ docker.io
 docker-compose-v2
 postgresql-client
 redis-tools
-
-## group: media
-imagemagick
-poppler-utils

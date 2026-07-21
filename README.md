@@ -59,17 +59,16 @@ Groups (`core` is always on, not pickable; `developer`/`custom` add from the res
 | Group | Contents |
 | --- | --- |
 | core *(always on)* | sudo, git, zsh, stow, tmux, and other server essentials; stows `zsh`, `git`, `tmux`, `dotf` |
-| ergonomics | ripgrep, fd, fzf, bat, eza, delta, zoxide, btop, direnv, `just`, `thefuck`, `shellcheck`, `gh`; stows `eza`, `btop`, `neofetch`, `gh`, `git-dev` |
+| ergonomics | ripgrep, fd, fzf, bat, eza, delta, zoxide, btop, direnv, `just`, `thefuck`, `shellcheck`, `gh`, `yazi`, `lazygit`, imagemagick, poppler-utils; stows `eza`, `btop`, `neofetch`, `gh`, `git-dev`, `lazygit` — *deps: rust, go-tools (yazi builds via cargo, lazygit via `go install`)* |
 | build | build-essential, cmake, ninja, pkg-config, and other native-build headers |
 | services | Docker, docker-compose, postgres/redis CLI clients |
 | nvim | Neovim (tarball), `lua-language-server`, `tree-sitter-cli` — *deps: build, node* |
 | node | `fnm`/Node, bun, pnpm |
-| rust | rustup, `yazi-build`, `rtk` — *dep: build* |
-| go-tools | Go toolchain, `gum`, `lazygit` |
+| rust | Rust toolchain (rustup) — *dep: build* |
+| go-tools | Go toolchain, `gum` |
 | python | `pip`/`venv`, `pipx`, `uv` |
-| ai-clis | `claude`, `opencode`, `@openai/codex` — *dep: node* |
+| ai-clis | `claude`, `opencode`, `@openai/codex`, `rtk` — *deps: node, rust* |
 | cloud | AWS CLI v2 |
-| media | imagemagick, poppler-utils |
 
 The choice is saved outside the repo at `${XDG_CONFIG_HOME:-$HOME/.config}/dotf/profile`, so
 re-runs of `apply.sh`/`doctor.sh` never re-ask. Change profile or groups later with `dotf profile`

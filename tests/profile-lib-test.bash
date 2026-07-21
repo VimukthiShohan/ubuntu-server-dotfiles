@@ -23,16 +23,17 @@ check "known group: ergonomics" dotf_known_group ergonomics
 check "known group: go-tools" dotf_known_group go-tools
 check_not "unknown group rejected: banana" dotf_known_group banana
 check_not "core is not a selectable group" dotf_known_group core
+check_not "media merged into ergonomics, no longer a group" dotf_known_group media
 check_eq "state file honors XDG_CONFIG_HOME" "$(dotf_state_file)" "$tmpdir/config/dotf/profile"
 check_eq "core stow packages" "$(dotf_group_stow_packages core)" "zsh git tmux dotf"
-check_eq "ergonomics stow packages" "$(dotf_group_stow_packages ergonomics)" "eza btop neofetch gh git-dev"
+check_eq "ergonomics stow packages" "$(dotf_group_stow_packages ergonomics)" "eza btop neofetch gh git-dev lazygit"
 
 # --- closure ---
 check_eq "closure adds deps: nvim" "$(dotf_closure nvim)" "build,node,nvim"
 check_eq "closure dedups: nvim,rust,node" "$(dotf_closure "nvim,rust,node")" "build,node,nvim,rust"
-check_eq "closure of ai-clis" "$(dotf_closure ai-clis)" "ai-clis,node"
+check_eq "closure of ai-clis pulls node+rust" "$(dotf_closure ai-clis)" "ai-clis,build,node,rust"
+check_eq "closure of ergonomics pulls toolchains" "$(dotf_closure ergonomics)" "build,ergonomics,go-tools,rust"
 check_eq "closure of empty is empty" "$(dotf_closure "")" ""
-check_eq "closure passthrough: media" "$(dotf_closure media)" "media"
 
 # --- parse: valid / missing / invalid ---
 sf="$tmpdir/state"
@@ -82,7 +83,7 @@ dotf_write_state minimal ""
 ( dotf_load_state_ro 2>/dev/null; dotf_group_active core && ! dotf_group_active ergonomics ) \
   && pass "minimal: core active, ergonomics not" || fail "minimal: core active, ergonomics not"
 dotf_write_state developer "$(IFS=,; echo "${DOTF_ALL_GROUPS[*]}")"
-( dotf_load_state_ro 2>/dev/null; dotf_group_active media ) \
+( dotf_load_state_ro 2>/dev/null; dotf_group_active cloud ) \
   && pass "developer: all groups active" || fail "developer: all groups active"
 
 # --- manifest filter / validate ---
@@ -109,7 +110,7 @@ printf '## group: banana\nx\n' > "$mf"
 check_not "validate: unknown header fails" dotf_validate_manifest "$mf"
 printf '## group: Banana\nx\n' > "$mf"
 check_not "validate: malformed header fails (not comment-skipped)" dotf_validate_manifest "$mf"
-printf '## group: core\nsudo\n## group: media\nimagemagick\n' > "$mf"
+printf '## group: core\nsudo\n## group: services\nredis-tools\n' > "$mf"
 check "validate: well-formed passes" dotf_validate_manifest "$mf"
 
 # --- stow packages ---

@@ -78,7 +78,9 @@ install_one() {
       run_step "superclaude install" superclaude install
       ;;
     superpowers)
-      run_step "superpowers plugin" claude plugin install superpowers@claude-plugins-official
+      # Not in the official marketplace — it ships from obra's superpowers-marketplace.
+      run_step "superpowers marketplace" claude plugin marketplace add obra/superpowers-marketplace
+      run_step "superpowers plugin" claude plugin install superpowers@superpowers-marketplace
       ;;
     mattpocock-skills)
       run_step "mattpocock marketplace" claude plugin marketplace add mattpocock/skills
